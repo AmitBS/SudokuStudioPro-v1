@@ -1,4 +1,4 @@
-import { BoardMatrix, CellData, Difficulty, LogicStep } from '../types/sudoku';
+import { BoardMatrix, CellData, CompletedHighlightCell, Difficulty, LogicStep } from '../types/sudoku';
 
 // Simple seeded PRNG for reproducible daily puzzles
 export function seededRandom(seedStr: string): () => number {
@@ -513,7 +513,7 @@ export interface NewlyCompletedUnits {
   newRows: number[];
   newCols: number[];
   newBoxes: number[];
-  highlightCells: { row: number; col: number }[];
+  highlightCells: CompletedHighlightCell[];
 }
 
 export function detectNewlyCompletedUnits(
@@ -523,19 +523,27 @@ export function detectNewlyCompletedUnits(
   const newRows: number[] = [];
   const newCols: number[] = [];
   const newBoxes: number[] = [];
-  const highlightCells: { row: number; col: number }[] = [];
+
+  // Map key "r,c" -> list of unit types completing it
+  const cellUnitMap = new Map<string, { r: number; c: number; types: ('row' | 'col' | 'box')[] }>();
 
   for (let i = 0; i < 9; i++) {
     if (!prevStatus.completedRows[i] && newStatus.completedRows[i]) {
       newRows.push(i);
       for (let c = 0; c < 9; c++) {
-        highlightCells.push({ row: i, col: c });
+        const key = `${i},${c}`;
+        const existing = cellUnitMap.get(key) || { r: i, c, types: [] };
+        existing.types.push('row');
+        cellUnitMap.set(key, existing);
       }
     }
     if (!prevStatus.completedCols[i] && newStatus.completedCols[i]) {
       newCols.push(i);
       for (let r = 0; r < 9; r++) {
-        highlightCells.push({ row: r, col: i });
+        const key = `${r},${i}`;
+        const existing = cellUnitMap.get(key) || { r, c: i, types: [] };
+        existing.types.push('col');
+        cellUnitMap.set(key, existing);
       }
     }
     if (!prevStatus.completedBoxes[i] && newStatus.completedBoxes[i]) {
@@ -544,10 +552,73 @@ export function detectNewlyCompletedUnits(
       const startC = (i % 3) * 3;
       for (let r = 0; r < 3; r++) {
         for (let c = 0; c < 3; c++) {
-          highlightCells.push({ row: startR + r, col: startC + c });
+          const row = startR + r;
+          const col = startC + c;
+          const key = `${row},${col}`;
+          const existing = cellUnitMap.get(key) || { r: row, c: col, types: [] };
+          existing.types.push('box');
+          cellUnitMap.set(key, existing);
         }
       }
     }
+  }
+
+  // Build highlightCells with distinct colors per unit and blended gradients for intersections
+  const highlightCells: CompletedHighlightCell[] = [];
+
+  for (const { r, c, types } of cellUnitMap.values()) {
+    let bgStyle = 'rgba(245, 158, 11, 0.35)';
+    let borderColor = '#F59E0B';
+    let ringColor = 'ring-amber-400';
+
+    if (types.length === 1) {
+      const single = types[0];
+      if (single === 'row') {
+        bgStyle = 'rgba(16, 185, 129, 0.35)'; // Emerald Green for completed row
+        borderColor = '#10B981';
+        ringColor = 'ring-emerald-400';
+      } else if (single === 'col') {
+        bgStyle = 'rgba(245, 158, 11, 0.35)'; // Amber / Gold for completed column
+        borderColor = '#F59E0B';
+        ringColor = 'ring-amber-400';
+      } else if (single === 'box') {
+        bgStyle = 'rgba(139, 92, 246, 0.35)'; // Violet / Purple for completed 3x3 block
+        borderColor = '#8B5CF6';
+        ringColor = 'ring-purple-400';
+      }
+    } else {
+      // Parallel completions: highlight intersection cell with vibrant dual/triple blend
+      const hasRow = types.includes('row');
+      const hasCol = types.includes('col');
+      const hasBox = types.includes('box');
+
+      if (hasRow && hasCol && hasBox) {
+        bgStyle = 'linear-gradient(135deg, rgba(16, 185, 129, 0.5) 0%, rgba(245, 158, 11, 0.5) 50%, rgba(139, 92, 246, 0.5) 100%)';
+        borderColor = '#10B981';
+        ringColor = 'ring-emerald-400';
+      } else if (hasRow && hasCol) {
+        bgStyle = 'linear-gradient(135deg, rgba(16, 185, 129, 0.5) 0%, rgba(245, 158, 11, 0.5) 100%)';
+        borderColor = '#10B981';
+        ringColor = 'ring-emerald-400';
+      } else if (hasRow && hasBox) {
+        bgStyle = 'linear-gradient(135deg, rgba(16, 185, 129, 0.5) 0%, rgba(139, 92, 246, 0.5) 100%)';
+        borderColor = '#8B5CF6';
+        ringColor = 'ring-purple-400';
+      } else if (hasCol && hasBox) {
+        bgStyle = 'linear-gradient(135deg, rgba(245, 158, 11, 0.5) 0%, rgba(139, 92, 246, 0.5) 100%)';
+        borderColor = '#F59E0B';
+        ringColor = 'ring-amber-400';
+      }
+    }
+
+    highlightCells.push({
+      row: r,
+      col: c,
+      unitTypes: types,
+      bgStyle,
+      borderColor,
+      ringColor,
+    });
   }
 
   return {

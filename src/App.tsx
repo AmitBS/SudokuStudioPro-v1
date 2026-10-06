@@ -17,7 +17,6 @@ import { CaptureScreen } from './components/screens/CaptureScreen';
 import { HistoryScreen } from './components/screens/HistoryScreen';
 import { StatisticsScreen } from './components/screens/StatisticsScreen';
 import { ContrastAuditModal } from './components/modals/ContrastAuditModal';
-import { InstallAppModal } from './components/modals/InstallAppModal';
 import {
   createBoardMatrix,
   generatePuzzle,
@@ -57,20 +56,11 @@ const DEFAULT_STATS: PlayerStats = {
 function MainApp() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
   const [isContrastModalOpen, setIsContrastModalOpen] = useState<boolean>(false);
-  const [isInstallModalOpen, setIsInstallModalOpen] = useState<boolean>(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
+  // Automatically scroll to top whenever screen changes (including opening Capture page)
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
-  }, []);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [currentScreen]);
 
   // Load Settings
   const [settings, setSettings] = useState<GameSettings>(() => {
@@ -384,7 +374,6 @@ function MainApp() {
         currentScreen={currentScreen}
         onNavigate={setCurrentScreen}
         onOpenContrastAudit={() => setIsContrastModalOpen(true)}
-        onOpenInstallApp={() => setIsInstallModalOpen(true)}
         hasActiveGame={!!activeGame && !activeGame.isCompleted && !activeGame.isGameOver}
       />
 
@@ -397,7 +386,6 @@ function MainApp() {
             onStartNewGame={handleStartNewGame}
             onResumeGame={() => setCurrentScreen('game')}
             onNavigate={setCurrentScreen}
-            onOpenInstallApp={() => setIsInstallModalOpen(true)}
           />
         )}
 
@@ -419,7 +407,6 @@ function MainApp() {
             onUpdateSettings={handleUpdateSettings}
             onNavigate={setCurrentScreen}
             onOpenContrastAudit={() => setIsContrastModalOpen(true)}
-            onOpenInstallApp={() => setIsInstallModalOpen(true)}
           />
         )}
 
@@ -458,13 +445,6 @@ function MainApp() {
       <ContrastAuditModal
         isOpen={isContrastModalOpen}
         onClose={() => setIsContrastModalOpen(false)}
-      />
-
-      {/* Android Install & APK Modal */}
-      <InstallAppModal
-        isOpen={isInstallModalOpen}
-        onClose={() => setIsInstallModalOpen(false)}
-        deferredPrompt={deferredPrompt}
       />
     </div>
   );

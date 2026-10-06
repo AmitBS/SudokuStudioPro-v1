@@ -1,5 +1,5 @@
 import React from 'react';
-import { BoardMatrix, CellData, GameSettings, LogicStep } from '../../types/sudoku';
+import { BoardMatrix, CellData, CompletedHighlightCell, GameSettings, LogicStep } from '../../types/sudoku';
 import { useTheme } from '../../theme/themeContext';
 
 interface SudokuBoardProps {
@@ -9,7 +9,7 @@ interface SudokuBoardProps {
   settings: GameSettings;
   activeLogicStep?: LogicStep | null;
   mistakeCells?: { row: number; col: number }[];
-  completedHighlightCells?: { row: number; col: number }[];
+  completedHighlightCells?: CompletedHighlightCell[];
   isPaused?: boolean;
 }
 
@@ -62,7 +62,8 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                   Math.floor(selectedCell.col / 3) === Math.floor(c / 3)));
 
             const isMistake = mistakeCells.some(m => m.row === r && m.col === c);
-            const isCompletedUnit = completedHighlightCells.some(ch => ch.row === r && ch.col === c);
+            const completedCell = completedHighlightCells.find(ch => ch.row === r && ch.col === c);
+            const isCompletedUnit = !!completedCell;
 
             // Logic step highlight checks
             let logicType: 'focus' | 'reference' | 'elimination' | null = null;
@@ -98,10 +99,10 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                 : 'var(--md-sys-color-grid-border-minor)',
             } : {};
 
-            // Background priority via CSS Variables
+            // Background priority via CSS Variables / gradients
             let cellBg = 'var(--md-sys-color-surface)';
-            if (isCompletedUnit) {
-              cellBg = 'rgba(245, 158, 11, 0.3)';
+            if (completedCell) {
+              cellBg = completedCell.bgStyle;
             } else if (isSelected) {
               cellBg = 'var(--md-sys-color-cell-selected-bg)';
             } else if (logicType === 'focus') {
@@ -136,12 +137,12 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                 disabled={isPaused}
                 onClick={() => onSelectCell(r, c)}
                 style={{
-                  backgroundColor: cellBg,
+                  background: cellBg,
                   ...borderRightStyle,
                   ...borderBottomStyle,
                 }}
                 className={`relative flex items-center justify-center p-0 transition-colors focus:outline-none ${
-                  isCompletedUnit ? 'ring-2 ring-inset ring-amber-400 z-20 animate-pulse' : ''
+                  isCompletedUnit ? `ring-2 ring-inset ${completedCell?.ringColor || 'ring-amber-400'} z-20 animate-pulse` : ''
                 } ${
                   isSelected && !isCompletedUnit ? 'ring-2 ring-inset z-10' : ''
                 } ${

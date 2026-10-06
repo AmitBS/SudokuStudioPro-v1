@@ -91,6 +91,15 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
+  // Automatically scroll to the top of the page when opening Capture screen
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    const mainEl = document.querySelector('main');
+    if (mainEl) {
+      mainEl.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  }, []);
+
   // Helper to optimize image size before sending to backend
   const optimizeImage = (file: File): Promise<string> => {
     return new Promise((resolve) => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Screen } from '../../types/sudoku';
 import { useTheme } from '../../theme/themeContext';
-import { Settings, Sun, Moon, ShieldCheck, Grid3X3, BarChart2, Download } from 'lucide-react';
+import { Settings, Sun, Moon, ShieldCheck, BarChart2 } from 'lucide-react';
 
 interface TopBarProps {
   currentScreen: Screen;
@@ -15,7 +15,6 @@ export const TopBar: React.FC<TopBarProps> = ({
   currentScreen,
   onNavigate,
   onOpenContrastAudit,
-  onOpenInstallApp,
   hasActiveGame,
 }) => {
   const { isDark, setThemeMode, themeMode, activePrimary, activeOnPrimary } = useTheme();
@@ -54,20 +53,17 @@ export const TopBar: React.FC<TopBarProps> = ({
           onClick={() => onNavigate('home')}
           className="flex items-center gap-2.5 text-left group focus:outline-none"
         >
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shadow-xs transition-transform group-hover:scale-105"
-            style={{
-              backgroundColor: 'var(--md-sys-color-primary)',
-              color: 'var(--md-sys-color-on-primary)',
-            }}
-          >
-            <Grid3X3 className="w-4 h-4 stroke-[2.5]" />
-          </div>
+          <img
+            src="/pwa-192x192.png"
+            alt="Sudoku Studio Pro"
+            className="w-8 h-8 rounded-lg shadow-xs object-cover transition-transform group-hover:scale-105"
+            referrerPolicy="no-referrer"
+          />
           <span
             className="font-extrabold text-base tracking-tight transition-colors"
             style={{ color: 'var(--md-sys-color-on-surface)' }}
           >
-            Sudoku Studio
+            Sudoku Studio Pro
           </span>
         </button>
 
@@ -98,24 +94,6 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* Zone 3: Actions */}
         <div className="flex items-center gap-1.5">
-          {/* Download / Install App */}
-          {onOpenInstallApp && (
-            <button
-              type="button"
-              onClick={onOpenInstallApp}
-              title="Download / Install APK"
-              aria-label="Download / Install APK"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-opacity hover:opacity-85 shadow-xs"
-              style={{
-                backgroundColor: 'var(--md-sys-color-primary)',
-                color: 'var(--md-sys-color-on-primary)',
-              }}
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Install App</span>
-            </button>
-          )}
-
           {/* Contrast Auditor Trigger */}
           <button
             type="button"

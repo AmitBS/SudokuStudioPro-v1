@@ -21,6 +21,15 @@ export interface CellData {
 
 export type BoardMatrix = CellData[][];
 
+export interface CompletedHighlightCell {
+  row: number;
+  col: number;
+  unitTypes: ('row' | 'col' | 'box')[];
+  bgStyle: string;
+  borderColor: string;
+  ringColor: string;
+}
+
 export interface MoveRecord {
   row: number;
   col: number;

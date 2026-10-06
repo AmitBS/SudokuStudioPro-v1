@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ActiveGame, CellData, Difficulty, GameSettings, LogicStep, Screen } from '../../types/sudoku';
+import { ActiveGame, CellData, CompletedHighlightCell, Difficulty, GameSettings, LogicStep, Screen } from '../../types/sudoku';
 import { useTheme } from '../../theme/themeContext';
 import { SudokuBoard } from '../sudoku/SudokuBoard';
 import { SudokuControls } from '../sudoku/SudokuControls';
@@ -29,7 +29,7 @@ import {
   playVictoryFanfare,
   triggerHaptic,
 } from '../../utils/audio';
-import { ArrowLeft, Pause, Play, Settings as SettingsIcon, RotateCcw, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Pause, Play, RotateCcw, AlertTriangle } from 'lucide-react';
 
 interface GameScreenProps {
   game: ActiveGame;
@@ -53,7 +53,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   const { activePrimary, activeOnPrimary, activeAccentText } = useTheme();
 
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>({ row: 0, col: 0 });
-  const [completedHighlightCells, setCompletedHighlightCells] = useState<{ row: number; col: number }[]>([]);
+  const [completedHighlightCells, setCompletedHighlightCells] = useState<CompletedHighlightCell[]>([]);
   const [isNotesMode, setIsNotesMode] = useState<boolean>(false);
   const [activeLogicStep, setActiveLogicStep] = useState<LogicStep | null>(null);
   const [isLogicModalOpen, setIsLogicModalOpen] = useState<boolean>(false);
@@ -488,17 +488,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             <Pause className="w-4 h-4 fill-current" />
           </button>
         </div>
-
-        {/* Quick Settings */}
-        <button
-          type="button"
-          onClick={() => onNavigate('settings')}
-          aria-label="Settings"
-          style={{ color: 'var(--md-sys-color-on-surface)' }}
-          className="p-1.5 rounded-xl hover:opacity-75 transition-opacity"
-        >
-          <SettingsIcon className="w-4 h-4" />
-        </button>
       </div>
 
       {/* SUDOKU BOARD */}

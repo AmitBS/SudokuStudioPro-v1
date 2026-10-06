@@ -1,7 +1,7 @@
 import React from 'react';
 import { ActiveGame, Difficulty, PlayerStats, Screen } from '../../types/sudoku';
 import { useTheme } from '../../theme/themeContext';
-import { Play, Calendar, Camera, BookmarkCheck, ArrowRight, Settings, Trophy, Flame, Download } from 'lucide-react';
+import { Play, Calendar, Camera, BookmarkCheck, ArrowRight, Trophy, Flame } from 'lucide-react';
 
 interface HomeScreenProps {
   activeGame: ActiveGame | null;
@@ -12,15 +12,79 @@ interface HomeScreenProps {
   onOpenInstallApp?: () => void;
 }
 
+const DIFFICULTY_THEMES: Record<
+  Difficulty,
+  {
+    lightBg: string;
+    darkBg: string;
+    lightBorder: string;
+    darkBorder: string;
+    accentColor: string;
+    darkAccentColor: string;
+    badgeBg: string;
+    darkBadgeBg: string;
+    badgeText: string;
+    darkBadgeText: string;
+  }
+> = {
+  easy: {
+    lightBg: '#F0FDF4', // Light gentle green
+    darkBg: 'rgba(16, 185, 129, 0.12)',
+    lightBorder: '#BBF7D0',
+    darkBorder: 'rgba(16, 185, 129, 0.35)',
+    accentColor: '#15803D',
+    darkAccentColor: '#34D399',
+    badgeBg: '#DCFCE7',
+    darkBadgeBg: 'rgba(16, 185, 129, 0.22)',
+    badgeText: '#166534',
+    darkBadgeText: '#6EE7B7',
+  },
+  medium: {
+    lightBg: '#FFFBEB', // Light gentle amber / yellow-gold
+    darkBg: 'rgba(245, 158, 11, 0.12)',
+    lightBorder: '#FDE68A',
+    darkBorder: 'rgba(245, 158, 11, 0.35)',
+    accentColor: '#B45309',
+    darkAccentColor: '#FBBF24',
+    badgeBg: '#FEF3C7',
+    darkBadgeBg: 'rgba(245, 158, 11, 0.22)',
+    badgeText: '#92400E',
+    darkBadgeText: '#FDE68A',
+  },
+  hard: {
+    lightBg: '#FFF7ED', // Light gentle orange / coral
+    darkBg: 'rgba(249, 115, 22, 0.12)',
+    lightBorder: '#FED7AA',
+    darkBorder: 'rgba(249, 115, 22, 0.35)',
+    accentColor: '#C2410C',
+    darkAccentColor: '#FB923C',
+    badgeBg: '#FFEDD5',
+    darkBadgeBg: 'rgba(249, 115, 22, 0.22)',
+    badgeText: '#9A3412',
+    darkBadgeText: '#FDBA74',
+  },
+  expert: {
+    lightBg: '#FAF5FF', // Light gentle purple / royal violet
+    darkBg: 'rgba(168, 85, 247, 0.12)',
+    lightBorder: '#E9D5FF',
+    darkBorder: 'rgba(168, 85, 247, 0.35)',
+    accentColor: '#7E22CE',
+    darkAccentColor: '#C084FC',
+    badgeBg: '#F3E8FF',
+    darkBadgeBg: 'rgba(168, 85, 247, 0.22)',
+    badgeText: '#6B21A8',
+    darkBadgeText: '#E9D5FF',
+  },
+};
+
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   activeGame,
   playerStats,
   onStartNewGame,
   onResumeGame,
   onNavigate,
-  onOpenInstallApp,
 }) => {
-  const { activePrimary, activeOnPrimary } = useTheme();
+  const { activePrimary, activeOnPrimary, isDark } = useTheme();
 
   const difficulties: {
     level: Difficulty;
@@ -66,50 +130,27 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b"
         style={{ borderColor: 'var(--md-sys-color-outline-variant)' }}
       >
-        <div>
-          <h1
-            className="text-3xl sm:text-4xl font-extrabold tracking-tight"
-            style={{ color: 'var(--md-sys-color-on-background)' }}
-          >
-            Sudoku
-          </h1>
-          <p
-            className="text-sm sm:text-base font-medium mt-1"
-            style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
-          >
-            Pure deductive reasoning with Material 3 design and high-contrast precision.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          {onOpenInstallApp && (
-            <button
-              type="button"
-              onClick={onOpenInstallApp}
-              style={{
-                backgroundColor: 'var(--md-sys-color-primary)',
-                color: 'var(--md-sys-color-on-primary)',
-              }}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-opacity hover:opacity-85 text-xs font-bold shadow-xs"
+        <div className="flex items-center gap-3.5">
+          <img
+            src="/pwa-192x192.png"
+            alt="Sudoku Studio Pro"
+            className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl shadow-md object-cover ring-2 ring-indigo-500/20"
+            referrerPolicy="no-referrer"
+          />
+          <div>
+            <h1
+              className="text-2xl sm:text-3xl font-extrabold tracking-tight"
+              style={{ color: 'var(--md-sys-color-on-background)' }}
             >
-              <Download className="w-4 h-4" />
-              <span>Install APK</span>
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={() => onNavigate('settings')}
-            style={{
-              backgroundColor: 'var(--md-sys-color-surface)',
-              borderColor: 'var(--md-sys-color-outline-variant)',
-              color: 'var(--md-sys-color-on-surface)',
-            }}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border transition-opacity hover:opacity-85 text-xs font-bold shadow-xs"
-          >
-            <Settings className="w-4 h-4" />
-            <span>Settings</span>
-          </button>
+              Sudoku Studio Pro
+            </h1>
+            <p
+              className="text-xs sm:text-sm font-medium mt-0.5"
+              style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
+            >
+              Pure deductive reasoning with Material 3 design and high-contrast precision.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -199,54 +240,74 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {difficulties.map(diff => (
-            <button
-              key={diff.level}
-              type="button"
-              onClick={() => onStartNewGame(diff.level)}
-              style={{
-                backgroundColor: 'var(--md-sys-color-surface)',
-                borderColor: 'var(--md-sys-color-outline-variant)',
-              }}
-              className="group p-5 rounded-2xl border hover:shadow-md transition-all text-left flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span
-                    className="text-lg font-bold transition-colors"
-                    style={{ color: 'var(--md-sys-color-on-surface)' }}
+          {difficulties.map(diff => {
+            const theme = DIFFICULTY_THEMES[diff.level];
+            const cardBg = isDark ? theme.darkBg : theme.lightBg;
+            const cardBorder = isDark ? theme.darkBorder : theme.lightBorder;
+            const accent = isDark ? theme.darkAccentColor : theme.accentColor;
+            const badgeBg = isDark ? theme.darkBadgeBg : theme.badgeBg;
+            const badgeText = isDark ? theme.darkBadgeText : theme.badgeText;
+
+            return (
+              <button
+                key={diff.level}
+                type="button"
+                onClick={() => onStartNewGame(diff.level)}
+                style={{
+                  backgroundColor: cardBg,
+                  borderColor: cardBorder,
+                }}
+                className="group p-5 rounded-2xl border-2 hover:shadow-md transition-all text-left flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span
+                      className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide"
+                      style={{
+                        backgroundColor: badgeBg,
+                        color: badgeText,
+                      }}
+                    >
+                      {diff.title}
+                    </span>
+                    <div
+                      className="flex items-center gap-2 text-xs font-mono font-medium"
+                      style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
+                    >
+                      <span>{diff.clues}</span>
+                      <span>·</span>
+                      <span>{diff.avgTime}</span>
+                    </div>
+                  </div>
+
+                  <h3
+                    className="text-lg font-bold mb-1 transition-colors"
+                    style={{ color: accent }}
                   >
-                    {diff.title}
-                  </span>
-                  <div
-                    className="flex items-center gap-2 text-xs font-mono"
+                    {diff.title} Sudoku
+                  </h3>
+
+                  <p
+                    className="text-xs sm:text-sm leading-relaxed"
                     style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
                   >
-                    <span>{diff.clues}</span>
-                    <span>·</span>
-                    <span>{diff.avgTime}</span>
-                  </div>
+                    {diff.description}
+                  </p>
                 </div>
-                <p
-                  className="text-xs sm:text-sm leading-relaxed"
-                  style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
-                >
-                  {diff.description}
-                </p>
-              </div>
 
-              <div
-                className="mt-4 pt-3 border-t flex items-center justify-between text-xs font-bold"
-                style={{
-                  borderColor: 'var(--md-sys-color-outline-variant)',
-                  color: 'var(--md-sys-color-primary)',
-                }}
-              >
-                <span>Start Puzzle</span>
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </div>
-            </button>
-          ))}
+                <div
+                  className="mt-4 pt-3 border-t flex items-center justify-between text-xs font-bold"
+                  style={{
+                    borderColor: cardBorder,
+                    color: accent,
+                  }}
+                >
+                  <span>Start {diff.title} Puzzle</span>
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </div>
+              </button>
+            );
+          })}
         </div>
       </section>
 

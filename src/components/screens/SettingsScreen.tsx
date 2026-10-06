@@ -4,7 +4,7 @@ import { useTheme } from '../../theme/themeContext';
 import { MaterialSwitch } from '../common/MaterialSwitch';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { AccentSwatchPicker } from '../common/AccentSwatchPicker';
-import { ArrowLeft, Monitor, Sun, Moon, Volume2, ShieldCheck, Gamepad2, Palette, Smartphone, Download } from 'lucide-react';
+import { ArrowLeft, Monitor, Sun, Moon, Volume2, ShieldCheck, Gamepad2, Palette } from 'lucide-react';
 
 interface SettingsScreenProps {
   settings: GameSettings;
@@ -19,7 +19,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onUpdateSettings,
   onNavigate,
   onOpenContrastAudit,
-  onOpenInstallApp,
 }) => {
   const { themeMode, setThemeMode, accentColor, setAccentColor } = useTheme();
 
@@ -289,56 +288,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         </div>
       </section>
 
-      {/* SECTION 4: Android App & Offline Installation */}
-      {onOpenInstallApp && (
-        <section
-          className="p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-          style={{
-            backgroundColor: 'var(--md-sys-color-surface)',
-            borderColor: 'var(--md-sys-color-primary)',
-          }}
-        >
-          <div className="flex items-start gap-3">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-              style={{
-                backgroundColor: 'rgba(99, 102, 241, 0.15)',
-                color: 'var(--md-sys-color-primary)',
-              }}
-            >
-              <Smartphone className="w-5 h-5" />
-            </div>
-            <div>
-              <div
-                className="text-sm font-bold"
-                style={{ color: 'var(--md-sys-color-on-surface)' }}
-              >
-                Download / Install Android App
-              </div>
-              <div
-                className="text-xs mt-0.5 leading-relaxed"
-                style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
-              >
-                Install as a native full-screen WebAPK on your phone with offline support.
-              </div>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onOpenInstallApp}
-            style={{
-              backgroundColor: 'var(--md-sys-color-primary)',
-              color: 'var(--md-sys-color-on-primary)',
-            }}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl shadow-xs hover:opacity-85 transition-opacity whitespace-nowrap self-start sm:self-auto"
-          >
-            <Download className="w-4 h-4" />
-            <span>Install APK</span>
-          </button>
-        </section>
-      )}
-
-      {/* SECTION 5: Contrast & Compliance Verification */}
+      {/* SECTION 4: Contrast & Compliance Verification */}
       <section
         className="p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4"
         style={{
