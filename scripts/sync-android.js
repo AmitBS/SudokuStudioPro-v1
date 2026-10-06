@@ -42,13 +42,13 @@ async function sync() {
       const targetDir = path.resolve(androidResDir, d.folder);
       fs.mkdirSync(targetDir, { recursive: true });
 
-      // Square launcher icon
+      // Square launcher icon (legacy)
       await sharp(masterIconPath)
         .resize(d.size, d.size)
         .png()
         .toFile(path.resolve(targetDir, 'ic_launcher.png'));
 
-      // Round launcher icon
+      // Round launcher icon (legacy)
       const circleSvg = Buffer.from(
         `<svg width="${d.size}" height="${d.size}"><circle cx="${d.size / 2}" cy="${d.size / 2}" r="${d.size / 2}" fill="black"/></svg>`
       );
@@ -60,7 +60,29 @@ async function sync() {
         .toBuffer();
 
       fs.writeFileSync(path.resolve(targetDir, 'ic_launcher_round.png'), roundedBuf);
-      console.log(`✓ Generated ${d.folder} (${d.size}x${d.size})`);
+
+      // Adaptive icon foreground layer (108dp canvas with safe zone centered icon)
+      const adaptiveTotalSize = Math.round((d.size / 48) * 108); // 108, 162, 216, 324, 432
+      const adaptiveInnerSize = Math.round(adaptiveTotalSize * 0.72); // 72dp viewport safe area
+
+      const innerIconBuf = await sharp(masterIconPath)
+        .resize(adaptiveInnerSize, adaptiveInnerSize)
+        .png()
+        .toBuffer();
+
+      await sharp({
+        create: {
+          width: adaptiveTotalSize,
+          height: adaptiveTotalSize,
+          channels: 4,
+          background: { r: 0, g: 0, b: 0, alpha: 0 },
+        },
+      })
+        .composite([{ input: innerIconBuf, gravity: 'center' }])
+        .png()
+        .toFile(path.resolve(targetDir, 'ic_launcher_foreground.png'));
+
+      console.log(`✓ Generated ${d.folder} (legacy ${d.size}x${d.size}, adaptive fg ${adaptiveTotalSize}x${adaptiveTotalSize})`);
     }
   }
 
