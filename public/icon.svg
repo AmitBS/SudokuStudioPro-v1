@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+  </defs>
+  <!-- Background squircle -->
+  <rect width="512" height="512" rx="110" fill="url(#bgGrad)" />
+  
+  <!-- Outer border -->
+  <rect x="76" y="76" width="360" height="360" rx="28" fill="#1e293b" stroke="#3b82f6" stroke-width="8" opacity="0.9" />
+  
+  <!-- Grid Lines Major (3x3 blocks) -->
+  <line x1="196" y1="84" x2="196" y2="428" stroke="#60a5fa" stroke-width="6" />
+  <line x1="316" y1="84" x2="316" y2="428" stroke="#60a5fa" stroke-width="6" />
+  <line x1="84" y1="196" x2="428" y2="196" stroke="#60a5fa" stroke-width="6" />
+  <line x1="84" y1="316" x2="428" y2="316" stroke="#60a5fa" stroke-width="6" />
+
+  <!-- Minor Lines -->
+  <line x1="136" y1="84" x2="136" y2="428" stroke="#334155" stroke-width="2" />
+  <line x1="166" y1="84" x2="166" y2="428" stroke="#334155" stroke-width="2" />
+  <line x1="256" y1="84" x2="256" y2="428" stroke="#334155" stroke-width="2" />
+  <line x1="286" y1="84" x2="286" y2="428" stroke="#334155" stroke-width="2" />
+  <line x1="376" y1="84" x2="376" y2="428" stroke="#334155" stroke-width="2" />
+  <line x1="406" y1="84" x2="406" y2="428" stroke="#334155" stroke-width="2" />
+
+  <!-- Selected Accent Cell Highlight -->
+  <rect x="198" y="198" width="116" height="116" rx="8" fill="url(#accentGrad)" opacity="0.35" />
+  
+  <!-- Numbers in cells -->
+  <text x="136" y="160" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="bold" fill="#f8fafc" text-anchor="middle">5</text>
+  <text x="256" y="160" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="bold" fill="#60a5fa" text-anchor="middle">3</text>
+  <text x="376" y="160" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="bold" fill="#f8fafc" text-anchor="middle">7</text>
+  
+  <text x="136" y="278" font-family="system-ui, -apple-system, sans-serif" font-size="52" font-weight="900" fill="#38bdf8" text-anchor="middle">6</text>
+  <text x="256" y="278" font-family="system-ui, -apple-system, sans-serif" font-size="58" font-weight="900" fill="#ffffff" text-anchor="middle">9</text>
+  <text x="376" y="278" font-family="system-ui, -apple-system, sans-serif" font-size="52" font-weight="900" fill="#38bdf8" text-anchor="middle">1</text>
+  
+  <text x="136" y="396" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="bold" fill="#f8fafc" text-anchor="middle">8</text>
+  <text x="256" y="396" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="bold" fill="#60a5fa" text-anchor="middle">4</text>
+  <text x="376" y="396" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="bold" fill="#f8fafc" text-anchor="middle">2</text>
+</svg>

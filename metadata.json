@@ -1,0 +1,6 @@
+{
+  "name": "Sudoku Studio Pro",
+  "description": "Commercial-grade Sudoku with Material 3 theming, flawless contrast in Light and Dark modes, intelligent logic deductions, puzzle camera capture, and statistics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

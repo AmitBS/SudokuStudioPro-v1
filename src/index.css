@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    background-color: var(--md-sys-color-background, #f8fafc);
+    color: var(--md-sys-color-on-background, #0f172a);
+  }
+
+  .dark body {
+    letter-spacing: 0.01em;
+  }
+
+  button, input, select, textarea {
+    font-family: inherit;
+  }
+}
+
+/* Material 3 Semantic Utility Classes */
+.bg-m3-background { background-color: var(--md-sys-color-background); }
+.text-m3-on-background { color: var(--md-sys-color-on-background); }
+
+.bg-m3-surface { background-color: var(--md-sys-color-surface); }
+.text-m3-on-surface { color: var(--md-sys-color-on-surface); }
+
+.text-m3-on-surface-variant { color: var(--md-sys-color-on-surface-variant); }
+.bg-m3-surface-variant { background-color: var(--md-sys-color-surface-variant); }
+
+.bg-m3-surface-container { background-color: var(--md-sys-color-surface-container); }
+.bg-m3-surface-container-low { background-color: var(--md-sys-color-surface-container-low); }
+.bg-m3-surface-container-high { background-color: var(--md-sys-color-surface-container-high); }
+.bg-m3-surface-container-highest { background-color: var(--md-sys-color-surface-container-highest); }
+
+.bg-m3-primary { background-color: var(--md-sys-color-primary); }
+.text-m3-on-primary { color: var(--md-sys-color-on-primary); }
+.text-m3-primary { color: var(--md-sys-color-primary); }
+
+.bg-m3-primary-container { background-color: var(--md-sys-color-primary-container); }
+.text-m3-on-primary-container { color: var(--md-sys-color-on-primary-container); }
+
+.border-m3-outline { border-color: var(--md-sys-color-outline); }
+.border-m3-outline-variant { border-color: var(--md-sys-color-outline-variant); }
+.divide-m3-outline-variant > :not([hidden]) ~ :not([hidden]) { border-color: var(--md-sys-color-outline-variant); }
+
+.text-m3-error { color: var(--md-sys-color-error); }
+.bg-m3-error-container { background-color: var(--md-sys-color-error-container); }
+.text-m3-on-error-container { color: var(--md-sys-color-on-error-container); }
