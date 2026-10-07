@@ -70,7 +70,7 @@ async function sync() {
         .png()
         .toBuffer();
 
-      await sharp({
+      const foregroundBuffer = await sharp({
         create: {
           width: adaptiveTotalSize,
           height: adaptiveTotalSize,
@@ -80,10 +80,39 @@ async function sync() {
       })
         .composite([{ input: innerIconBuf, gravity: 'center' }])
         .png()
-        .toFile(path.resolve(targetDir, 'ic_launcher_foreground.png'));
+        .toBuffer();
 
-      console.log(`✓ Generated ${d.folder} (legacy ${d.size}x${d.size}, adaptive fg ${adaptiveTotalSize}x${adaptiveTotalSize})`);
+      // Write to mipmap target
+      fs.writeFileSync(path.resolve(targetDir, 'ic_launcher_foreground.png'), foregroundBuffer);
+
+      // Also write to corresponding drawable target
+      const drawableFolderName = d.folder.replace('mipmap-', 'drawable-');
+      const drawableDir = path.resolve(androidResDir, drawableFolderName);
+      fs.mkdirSync(drawableDir, { recursive: true });
+      fs.writeFileSync(path.resolve(drawableDir, 'ic_launcher_foreground.png'), foregroundBuffer);
+
+      console.log(`✓ Generated ${d.folder} and ${drawableFolderName} (legacy ${d.size}x${d.size}, adaptive fg ${adaptiveTotalSize}x${adaptiveTotalSize})`);
     }
+
+    // Default fallback in res/drawable/
+    const defaultFgSize = 432;
+    const defaultInnerSize = Math.round(defaultFgSize * 0.72);
+    const defaultInnerBuf = await sharp(masterIconPath)
+      .resize(defaultInnerSize, defaultInnerSize)
+      .png()
+      .toBuffer();
+
+    await sharp({
+      create: {
+        width: defaultFgSize,
+        height: defaultFgSize,
+        channels: 4,
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      },
+    })
+      .composite([{ input: defaultInnerBuf, gravity: 'center' }])
+      .png()
+      .toFile(path.resolve(androidResDir, 'drawable', 'ic_launcher_foreground.png'));
   }
 
   console.log('★ All Android Native assets and icons updated successfully!');
