@@ -14,6 +14,7 @@ interface SudokuBoardProps {
   mistakeCells?: { row: number; col: number }[];
   completedHighlightCells?: CompletedHighlightCell[];
   isPaused?: boolean;
+  celebratingNumber?: number | null;
 }
 
 export const SudokuBoard: React.FC<SudokuBoardProps> = ({
@@ -26,6 +27,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
   mistakeCells = [],
   completedHighlightCells = [],
   isPaused = false,
+  celebratingNumber = null,
 }) => {
   const { tokens } = useTheme();
 
@@ -70,7 +72,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
 
   return (
     <div className="relative w-full max-w-[480px] mx-auto aspect-square select-none">
-      {/* CSS Keyframes for smooth 0.75-second (750ms) circular progress indicator */}
+      {/* CSS Keyframes for smooth 0.5-second (500ms) circular progress indicator */}
       <style>{`
         @keyframes fillSudokuProgress {
           0% {
@@ -186,6 +188,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
             return (
               <button
                 key={`${r}-${c}`}
+                id={`sudoku-cell-${r}-${c}`}
                 type="button"
                 role="gridcell"
                 aria-label={`Row ${r + 1}, Column ${c + 1}, Value ${cell.value || 'Empty'}`}
@@ -193,7 +196,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                 disabled={isPaused}
                 onPointerDown={(e) => {
                   if (isPaused) return;
-                  // Only trigger 0.75-second (750ms) long-press on empty cells
+                  // Only trigger 0.5-second (500ms) long-press on empty cells
                   if (cell.value === 0) {
                     longPressTriggeredRef.current = false;
                     pressStartPosRef.current = { x: e.clientX, y: e.clientY };
@@ -212,7 +215,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                         rect,
                         currentNotes: [...(cell.notes || [])],
                       });
-                    }, 750);
+                    }, 500);
                   }
                 }}
                 onPointerMove={(e) => {
@@ -252,7 +255,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                   isBeingPressed ? 'ring-2 ring-inset ring-primary z-20' : ''
                 }`}
               >
-                {/* 0.75-Second Circular Progress Indicator */}
+                {/* 0.5-Second Circular Progress Indicator */}
                 {isBeingPressed && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
                     <svg className="w-[84%] h-[84%]" viewBox="0 0 44 44">
@@ -281,7 +284,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                         style={{
                           transformOrigin: 'center',
                           transform: 'rotate(-90deg)',
-                          animation: 'fillSudokuProgress 750ms linear forwards',
+                          animation: 'fillSudokuProgress 500ms linear forwards',
                         }}
                       />
                     </svg>
@@ -291,8 +294,12 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                 {/* Value Display */}
                 {cell.value !== 0 ? (
                   <span
-                    className={`text-xl sm:text-2xl font-mono tabular-nums leading-none select-none transition-transform ${
+                    className={`text-xl sm:text-2xl font-mono tabular-nums leading-none select-none transition-all duration-300 ${
                       cell.given ? 'font-extrabold' : 'font-bold'
+                    } ${
+                      celebratingNumber !== null && cell.value <= celebratingNumber
+                        ? 'opacity-20 scale-90 blur-[0.4px]'
+                        : ''
                     }`}
                     style={{ color: textColor }}
                   >

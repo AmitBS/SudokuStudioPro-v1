@@ -250,7 +250,7 @@ export function playEraseSound(enabled = true): void {
   }
 }
 
-// 5. CRITICAL ERROR BUZZ SOUND (Deep, harsh dual-oscillator buzzer with aggressive acoustic beating)
+// 5. CRITICAL ERROR BEEP (Sharp, high-pitched, treble-rich alert beep with discordant clash)
 export function playCriticalErrorBuzz(enabled = true): void {
   if (!enabled) return;
   if (!canPlaySound('NUMBER_ENTRY', 40)) return;
@@ -260,46 +260,51 @@ export function playCriticalErrorBuzz(enabled = true): void {
     if (!ctx) return;
     const now = ctx.currentTime;
 
-    // Dual detuned sawtooth oscillators producing deep mechanical discordant beating
+    // Dual high-frequency oscillators (A5 880Hz + dissonant Bb5 932Hz) with prominent treble harmonics
     const osc1 = ctx.createOscillator();
     const osc2 = ctx.createOscillator();
     const gain = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
+    const highShelf = ctx.createBiquadFilter();
+    const bandPass = ctx.createBiquadFilter();
 
     osc1.type = 'sawtooth';
-    osc1.frequency.setValueAtTime(110, now); // Low A2
-    osc1.frequency.exponentialRampToValueAtTime(90, now + 0.25);
+    osc1.frequency.setValueAtTime(880, now); // A5 (high pitch)
+    osc1.frequency.exponentialRampToValueAtTime(659.25, now + 0.16); // Rapid high-frequency fall (E5)
 
-    osc2.type = 'sawtooth';
-    osc2.frequency.setValueAtTime(117.5, now); // Slightly detuned sharp discordant note
-    osc2.frequency.exponentialRampToValueAtTime(94, now + 0.25);
+    osc2.type = 'square';
+    osc2.frequency.setValueAtTime(932.33, now); // Bb5 (sharp discordant clash)
+    osc2.frequency.exponentialRampToValueAtTime(698.46, now + 0.16); // F5
 
-    // Low-pass filter with resonant bite to shape raw harsh buzz
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(750, now);
-    filter.frequency.exponentialRampToValueAtTime(350, now + 0.25);
-    filter.Q.setValueAtTime(3.5, now);
+    // High-pass filter to strip low rumble and focus energy in high treble
+    bandPass.type = 'highpass';
+    bandPass.frequency.setValueAtTime(650, now);
 
-    // Assertive volume envelope: instantaneous attack, sustained buzz, sharp cut
+    // High-shelf treble booster for extra sharp presence
+    highShelf.type = 'highshelf';
+    highShelf.frequency.setValueAtTime(2200, now);
+    highShelf.gain.setValueAtTime(8, now); // +8dB treble boost
+
+    // Crisp instantaneous attack, punchy 170ms decay
     gain.gain.setValueAtTime(0.001, now);
-    gain.gain.linearRampToValueAtTime(0.24, now + 0.008);
-    gain.gain.setValueAtTime(0.22, now + 0.18);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
+    gain.gain.linearRampToValueAtTime(0.22, now + 0.003);
+    gain.gain.setValueAtTime(0.19, now + 0.11);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.17);
 
-    osc1.connect(filter);
-    osc2.connect(filter);
-    filter.connect(gain);
+    osc1.connect(bandPass);
+    osc2.connect(bandPass);
+    bandPass.connect(highShelf);
+    highShelf.connect(gain);
     gain.connect(ctx.destination);
 
     osc1.start(now);
     osc2.start(now);
-    osc1.stop(now + 0.27);
-    osc2.stop(now + 0.27);
+    osc1.stop(now + 0.18);
+    osc2.stop(now + 0.18);
 
-    // Assertive tactile vibration for mobile users
+    // Assertive tactile vibration
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       try {
-        navigator.vibrate([120, 60, 160]);
+        navigator.vibrate([100, 50, 120]);
       } catch {
         // Ignore
       }
@@ -444,6 +449,37 @@ export function playCelebrationFanfare(enabled = true): void {
       sOsc.start(now + sTime);
       sOsc.stop(now + sTime + 0.35);
     });
+  } catch {
+    // Ignore
+  }
+}
+
+// 7b. PARADE CHIME SOUND (Harmonic bell tone for each number 1-9 returning to numpad)
+export function playParadeChime(num: number, enabled = true): void {
+  if (!enabled) return;
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    const scale = [523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50, 1318.51];
+    const freq = scale[Math.max(0, Math.min(8, num - 1))];
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = num === 9 ? 'triangle' : 'sine';
+    osc.frequency.setValueAtTime(freq, now);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.08, now + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.25);
   } catch {
     // Ignore
   }

@@ -17,28 +17,38 @@ export const CellNotesPopup: React.FC<CellNotesPopupProps> = ({
   const { tokens } = useTheme();
   const popupRef = useRef<HTMLDivElement>(null);
   const [coords, setCoords] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const dragStartRef = useRef<{ clientX: number; clientY: number; startLeft: number; startTop: number } | null>(null);
 
+  const POPUP_WIDTH = 172;
+  const POPUP_HEIGHT = 198;
+  const MARGIN = 8;
+
+  // Initialize position near the pressed cell
   useEffect(() => {
-    const popupWidth = 168;
-    const popupHeight = 168;
-    const padding = 12;
+    let left = cellRect.left + cellRect.width / 2 - POPUP_WIDTH / 2;
+    left = Math.max(MARGIN, Math.min(window.innerWidth - POPUP_WIDTH - MARGIN, left));
 
-    // Center horizontally over the cell, clamped within screen boundaries
-    let left = cellRect.left + cellRect.width / 2 - popupWidth / 2;
-    left = Math.max(padding, Math.min(window.innerWidth - popupWidth - padding, left));
-
-    // Place above if there is enough headroom, otherwise place below
-    let top = cellRect.top - popupHeight - 10;
-    if (top < padding + 40) {
-      // Place below the cell
+    let top = cellRect.top - POPUP_HEIGHT - 10;
+    if (top < MARGIN + 40) {
       top = cellRect.bottom + 10;
     }
-
-    // Ensure it doesn't push off the bottom edge
-    top = Math.max(padding, Math.min(window.innerHeight - popupHeight - padding, top));
+    top = Math.max(MARGIN, Math.min(window.innerHeight - POPUP_HEIGHT - MARGIN, top));
 
     setCoords({ top, left });
   }, [cellRect]);
+
+  // Ensure popup stays strictly within boundaries on viewport resize
+  useEffect(() => {
+    const handleResize = () => {
+      setCoords(prev => ({
+        left: Math.max(MARGIN, Math.min(window.innerWidth - POPUP_WIDTH - MARGIN, prev.left)),
+        top: Math.max(MARGIN, Math.min(window.innerHeight - POPUP_HEIGHT - MARGIN, prev.top)),
+      }));
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Close on Escape key
   useEffect(() => {
@@ -51,6 +61,56 @@ export const CellNotesPopup: React.FC<CellNotesPopupProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
+  // Draggable Pointer Event Handlers
+  const handleDragPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+    setIsDragging(true);
+    dragStartRef.current = {
+      clientX: e.clientX,
+      clientY: e.clientY,
+      startLeft: coords.left,
+      startTop: coords.top,
+    };
+  };
+
+  const handleDragPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging || !dragStartRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const deltaX = e.clientX - dragStartRef.current.clientX;
+    const deltaY = e.clientY - dragStartRef.current.clientY;
+
+    const nextLeft = dragStartRef.current.startLeft + deltaX;
+    const nextTop = dragStartRef.current.startTop + deltaY;
+
+    const clampedLeft = Math.max(MARGIN, Math.min(window.innerWidth - POPUP_WIDTH - MARGIN, nextLeft));
+    const clampedTop = Math.max(MARGIN, Math.min(window.innerHeight - POPUP_HEIGHT - MARGIN, nextTop));
+
+    setCoords({
+      left: clampedLeft,
+      top: clampedTop,
+    });
+  };
+
+  const handleDragPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDragging) {
+      try {
+        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch {
+        // ignore
+      }
+      setIsDragging(false);
+      dragStartRef.current = null;
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Tap-outside-to-close dismiss backdrop */}
@@ -61,27 +121,58 @@ export const CellNotesPopup: React.FC<CellNotesPopupProps> = ({
         aria-hidden="true"
       />
 
-      {/* Floating 3x3 Notes Matrix */}
+      {/* Floating 3x3 Notes Matrix (Draggable) */}
       <div
         ref={popupRef}
         role="dialog"
-        aria-label="Select notes to add or remove"
-        className="absolute rounded-2xl shadow-2xl overflow-hidden border-2 animate-in zoom-in-95 fade-in duration-150"
+        aria-label="Draggable 3x3 Notes Matrix"
+        className={`absolute rounded-2xl shadow-2xl overflow-hidden border-2 animate-in zoom-in-95 fade-in duration-150 flex flex-col ${
+          isDragging ? 'shadow-cyan-500/20 ring-2 ring-primary scale-[1.02]' : ''
+        }`}
         style={{
           top: `${coords.top}px`,
           left: `${coords.left}px`,
-          width: '168px',
-          height: '168px',
+          width: `${POPUP_WIDTH}px`,
+          height: `${POPUP_HEIGHT}px`,
           backgroundColor: 'var(--md-sys-color-surface-container-high)',
           borderColor: 'var(--md-sys-color-primary)',
-          boxShadow: '0 12px 36px -4px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08)',
+          boxShadow: '0 14px 40px -4px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08)',
         }}
         onClick={e => e.stopPropagation()}
         onPointerDown={e => e.stopPropagation()}
         onTouchStart={e => e.stopPropagation()}
       >
+        {/* Drag Handle Bar Header */}
+        <div
+          onPointerDown={handleDragPointerDown}
+          onPointerMove={handleDragPointerMove}
+          onPointerUp={handleDragPointerUp}
+          onPointerCancel={handleDragPointerUp}
+          className="w-full h-7 flex items-center justify-between px-2.5 select-none touch-none cursor-grab active:cursor-grabbing border-b shrink-0 transition-colors"
+          style={{
+            backgroundColor: 'var(--md-sys-color-surface-container-highest)',
+            borderColor: 'var(--md-sys-color-outline-variant)',
+            color: 'var(--md-sys-color-on-surface-variant)',
+          }}
+          title="Drag to reposition anywhere on screen"
+        >
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-bold uppercase tracking-wider">
+              Notes
+            </span>
+          </div>
+
+          {/* Grab indicator pill */}
+          <div className="w-9 h-1 rounded-full bg-current opacity-40" />
+
+          <span className="text-[9px] font-semibold opacity-60">
+            Drag
+          </span>
+        </div>
+
         {/* 3x3 Grid with crisp interior borders */}
-        <div className="w-full h-full grid grid-cols-3 grid-rows-3 bg-neutral-300 dark:bg-neutral-700 gap-[1px]">
+        <div className="w-full flex-1 grid grid-cols-3 grid-rows-3 bg-neutral-300 dark:bg-neutral-700 gap-[1px]">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => {
             const isNotePresent = currentNotes.includes(num);
 

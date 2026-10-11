@@ -13,6 +13,7 @@ interface SudokuControlsProps {
   digitCounts: Record<number, number>;
   canUndo: boolean;
   disabled?: boolean;
+  celebratingNumber?: number | null;
 }
 
 export const SudokuControls: React.FC<SudokuControlsProps> = ({
@@ -26,6 +27,7 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
   digitCounts,
   canUndo,
   disabled = false,
+  celebratingNumber = null,
 }) => {
   return (
     <div className="w-full max-w-[480px] mx-auto space-y-4">
@@ -136,26 +138,38 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => {
           const placedCount = digitCounts[num] || 0;
           const isCompleted = placedCount >= 9;
+          const isCelebrating = celebratingNumber === num;
 
           return (
             <button
               key={num}
+              id={`numpad-btn-${num}`}
               type="button"
-              disabled={isCompleted || disabled}
+              disabled={(isCompleted && !isCelebrating) || disabled}
               onClick={() => onNumberClick(num)}
               style={{
-                backgroundColor: isCompleted
+                backgroundColor: isCelebrating
+                  ? 'var(--md-sys-color-primary)'
+                  : isCompleted
                   ? 'var(--md-sys-color-surface-container-high)'
                   : 'var(--md-sys-color-surface)',
-                borderColor: 'var(--md-sys-color-outline-variant)',
+                borderColor: isCelebrating
+                  ? 'var(--md-sys-color-primary)'
+                  : 'var(--md-sys-color-outline-variant)',
               }}
               className={`flex flex-col items-center justify-center py-2 sm:py-2.5 rounded-xl border transition-all active:scale-95 select-none ${
-                isCompleted ? 'opacity-35 cursor-not-allowed' : 'hover:opacity-90 shadow-xs'
+                isCelebrating
+                  ? 'scale-115 ring-4 ring-primary/40 shadow-lg shadow-primary/30 z-20 animate-bounce'
+                  : isCompleted
+                  ? 'opacity-35 cursor-not-allowed'
+                  : 'hover:opacity-90 shadow-xs'
               }`}
             >
               <span
                 style={{
-                  color: isCompleted
+                  color: isCelebrating
+                    ? 'var(--md-sys-color-on-primary)'
+                    : isCompleted
                     ? 'var(--md-sys-color-on-surface-variant)'
                     : 'var(--md-sys-color-on-surface)',
                 }}
