@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { BoardMatrix } from '../../types/sudoku';
-import { playParadeChime, triggerHaptic } from '../../utils/audio';
+import { playParadeChime, playVictoryFanfare, triggerHaptic } from '../../utils/audio';
 import { Sparkles, ArrowRight } from 'lucide-react';
 
 interface NumberCelebrationParadeProps {
   board: BoardMatrix;
   isActive: boolean;
-  onNumberStep: (num: number | null) => void;
+  onNumberStep: (currentAnimatingNum: number | null, completedNumbers: number[]) => void;
   onComplete: () => void;
   soundEnabled: boolean;
   hapticsEnabled: boolean;
@@ -60,7 +60,7 @@ interface FireworkParticle {
   decay: number;
 }
 
-// Vibrant theme colors for each number 1 to 9
+// Distinct, vibrant colors for each number 1 through 9
 const DIGIT_COLORS: Record<number, string> = {
   1: '#f59e0b', // Amber Gold
   2: '#0284c7', // Sky Azure
@@ -91,16 +91,33 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [currentNum, setCurrentNum] = useState<number>(1);
-  const isFinishedRef = useRef(false);
 
-  // References for active animation loop
+  // Synchronize mutable refs to make the sequential animation immune to React re-renders
+  const boardRef = useRef<BoardMatrix>(board);
+  boardRef.current = board;
+
+  const onNumberStepRef = useRef(onNumberStep);
+  onNumberStepRef.current = onNumberStep;
+
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+
+  const soundEnabledRef = useRef(soundEnabled);
+  soundEnabledRef.current = soundEnabled;
+
+  const hapticsEnabledRef = useRef(hapticsEnabled);
+  hapticsEnabledRef.current = hapticsEnabled;
+
+  const isCancelledRef = useRef<boolean>(false);
+  const isRunningRef = useRef<boolean>(false);
+
+  // Active rendering collections
   const activeDigitsRef = useRef<ActiveDigit[]>([]);
   const stardustRef = useRef<StardustSpark[]>([]);
   const rocketsRef = useRef<FireworkRocket[]>([]);
   const fireworksRef = useRef<FireworkParticle[]>([]);
-  const currentStepNumRef = useRef<number>(1);
 
-  // 1. Master Canvas Loop for Motion Trails, Floating Numbers & Firecrackers
+  // 1. Hardware-Accelerated Canvas Rendering Loop (Motion Trails, Echoes, Firecrackers)
   useEffect(() => {
     if (!isActive) return;
 
@@ -118,12 +135,12 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
     const firecrackerColors = ['#f59e0b', '#3b82f6', '#10b981', '#ec4899', '#8b5cf6', '#f43f5e', '#06b6d4', '#eab308'];
 
     const spawnFirecracker = () => {
-      const x = Math.random() * (canvas.width - 200) + 100;
+      const x = Math.random() * (canvas.width - 160) + 80;
       rocketsRef.current.push({
         x,
         y: canvas.height,
         vy: -(Math.random() * 7 + 13),
-        targetY: Math.random() * (canvas.height * 0.4) + 60,
+        targetY: Math.random() * (canvas.height * 0.45) + 60,
         color: firecrackerColors[Math.floor(Math.random() * firecrackerColors.length)],
       });
     };
@@ -131,10 +148,9 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
     const render = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       tick++;
-      const now = performance.now();
 
-      // Spawn ambient firecracker rockets periodically
-      if (tick % 28 === 0) {
+      // Launch ambient celebration firecrackers
+      if (tick % 24 === 0) {
         spawnFirecracker();
       }
 
@@ -152,7 +168,7 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
         ctx.shadowBlur = 0;
 
         if (r.y <= r.targetY || r.vy >= -1) {
-          // Burst firecracker
+          // Burst firecracker bouquet
           for (let i = 0; i < 40; i++) {
             const angle = Math.random() * Math.PI * 2;
             const speed = Math.random() * 5.5 + 1.5;
@@ -227,7 +243,7 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
         const head = history[0];
         const numColor = digit.color;
 
-        // 1. Draw Continuous Luminous Motion Trail Ribbon
+        // 1. Continuous Luminous Motion Trail Ribbon
         if (history.length > 2) {
           ctx.save();
           ctx.lineCap = 'round';
@@ -253,8 +269,7 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
           ctx.restore();
         }
 
-        // 2. Draw Multiple Visible Ghost Echo Afterimages Behind the Number
-        // Echo points at index 4, 8, 12, 16 for unmistakable motion trail visibility
+        // 2. Visible Ghost Echo Afterimages Behind the Traveling Number
         const echoIndices = [4, 8, 12, 16];
         echoIndices.forEach((idx, step) => {
           if (idx < history.length) {
@@ -271,7 +286,6 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
               const badgeSize = 34;
               const radius = 9;
 
-              // Ghost badge backdrop
               ctx.beginPath();
               ctx.roundRect(-badgeSize / 2, -badgeSize / 2, badgeSize, badgeSize, radius);
               ctx.fillStyle = numColor;
@@ -279,7 +293,6 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
               ctx.shadowBlur = 10;
               ctx.fill();
 
-              // Ghost numeral text
               ctx.font = 'bold 20px monospace';
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
@@ -291,7 +304,7 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
           }
         });
 
-        // 3. Draw the Lead Number Tile at Head
+        // 3. Lead Number Tile at Head
         ctx.save();
         ctx.translate(head.x, head.y);
         ctx.globalAlpha = 1;
@@ -307,7 +320,7 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
         ctx.fillStyle = numColor;
         ctx.fill();
 
-        // Inner crisp white border for pop
+        // Inner crisp white border for high definition
         ctx.lineWidth = 2.5;
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
         ctx.shadowBlur = 0;
@@ -341,171 +354,220 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
     };
   }, [isActive]);
 
-  // 2. Sequential Ascending 1 through 9 Flight Controller with Visible Motion Trails
+  // 2. Strict Sequential Animation Controller (Number 1 -> 2 -> ... -> 9)
   useEffect(() => {
     if (!isActive) return;
-    isFinishedRef.current = false;
+    if (isRunningRef.current) return;
 
-    let isCancelled = false;
-    let animFrameLoop: number;
+    isRunningRef.current = true;
+    isCancelledRef.current = false;
 
-    const runNumberSequence = (num: number) => {
-      if (isCancelled) return;
+    const completedNumbers: number[] = [];
 
-      if (num > 9) {
-        if (!isFinishedRef.current) {
-          isFinishedRef.current = true;
-          activeDigitsRef.current = [];
-          onNumberStep(null);
-          onComplete();
+    // Helper to animate one specific number from board into its numpad button
+    const animateSingleNumber = (num: number): Promise<void> => {
+      return new Promise<void>(resolve => {
+        if (isCancelledRef.current) {
+          resolve();
+          return;
         }
-        return;
-      }
 
-      setCurrentNum(num);
-      currentStepNumRef.current = num;
-      onNumberStep(num);
+        setCurrentNum(num);
+        onNumberStepRef.current(num, completedNumbers);
 
-      // 1. Locate destination numpad button for this number
-      const targetBtn = document.getElementById(`numpad-btn-${num}`);
-      const targetRect = targetBtn?.getBoundingClientRect();
+        // 1. Locate destination number box below the board
+        const targetBtn = document.getElementById(`numpad-btn-${num}`);
+        const targetRect = targetBtn?.getBoundingClientRect();
+        const boardEl = document.querySelector('[role="grid"][aria-label="Sudoku Board"]');
+        const boardRect = boardEl?.getBoundingClientRect();
 
-      // 2. Find all 9 occurrences of this number on the board
-      const matchingCells: { r: number; c: number; rect: DOMRect }[] = [];
-      for (let r = 0; r < 9; r++) {
-        for (let c = 0; c < 9; c++) {
-          if (board[r][c].value === num) {
-            const cellEl = document.getElementById(`sudoku-cell-${r}-${c}`);
-            if (cellEl) {
-              matchingCells.push({ r, c, rect: cellEl.getBoundingClientRect() });
-            }
-          }
-        }
-      }
+        // 2. Find all 9 occurrences of this number on the board
+        const matchingCells: { r: number; c: number; rect: DOMRect }[] = [];
+        const currentBoard = boardRef.current;
 
-      const destX = targetRect ? targetRect.left + targetRect.width / 2 : window.innerWidth / 2;
-      const destY = targetRect ? targetRect.top + targetRect.height / 2 : window.innerHeight - 80;
-      const color = DIGIT_COLORS[num] || '#3b82f6';
-
-      // 3. Initialize digits starting at their exact board positions
-      const digits: ActiveDigit[] = matchingCells.map(({ r, c, rect }) => {
-        const sx = rect.left + rect.width / 2;
-        const sy = rect.top + rect.height / 2;
-        return {
-          id: `${num}-${r}-${c}`,
-          num,
-          startX: sx,
-          startY: sy,
-          targetX: destX,
-          targetY: destY,
-          color,
-          history: [{ x: sx, y: sy, time: performance.now() }],
-        };
-      });
-
-      activeDigitsRef.current = digits;
-
-      // Animation Timing:
-      // - 0ms to 320ms: Moves slightly upward from current cell position
-      // - 320ms to 1250ms: Slowly travels downward along curved arc into the numpad button below
-      // - 1250ms: Lands into button, plays chime, pulses numpad button
-      const startTime = performance.now();
-      const LIFT_DURATION = 320;
-      const TRAVEL_DURATION = 930;
-      const TOTAL_DURATION = LIFT_DURATION + TRAVEL_DURATION; // 1250ms total flight
-
-      const updateFrame = () => {
-        if (isCancelled) return;
-        const elapsed = performance.now() - startTime;
-
-        if (elapsed < TOTAL_DURATION) {
-          activeDigitsRef.current.forEach(digit => {
-            let cx = digit.startX;
-            let cy = digit.startY;
-
-            if (elapsed < LIFT_DURATION) {
-              // Phase 1: Slowly move slightly upward (-30px)
-              const u = easeOutQuad(elapsed / LIFT_DURATION);
-              cx = digit.startX;
-              cy = digit.startY - 30 * u;
-            } else {
-              // Phase 2: Slowly travel along smooth Bézier curve down to numpad button
-              const progress = (elapsed - LIFT_DURATION) / TRAVEL_DURATION;
-              const s = easeInOutCubic(progress);
-
-              // Lofted control point for natural graceful arc
-              const p0x = digit.startX;
-              const p0y = digit.startY - 30;
-              const p1x = digit.startX + (digit.targetX - digit.startX) * 0.28;
-              const p1y = Math.min(p0y, digit.targetY) - 36;
-              const p2x = digit.targetX;
-              const p2y = digit.targetY;
-
-              cx = Math.pow(1 - s, 2) * p0x + 2 * (1 - s) * s * p1x + Math.pow(s, 2) * p2x;
-              cy = Math.pow(1 - s, 2) * p0y + 2 * (1 - s) * s * p1y + Math.pow(s, 2) * p2y;
-
-              // Emit stardust sparkles along the trail for visual richness
-              if (Math.random() < 0.45) {
-                const angle = Math.random() * Math.PI * 2;
-                const speed = Math.random() * 2 + 0.5;
-                stardustRef.current.push({
-                  x: cx + (Math.random() - 0.5) * 8,
-                  y: cy + (Math.random() - 0.5) * 8,
-                  vx: Math.cos(angle) * speed,
-                  vy: Math.sin(angle) * speed,
-                  size: Math.random() * 2.8 + 1.2,
-                  color: digit.color,
-                  alpha: 0.9,
-                  decay: Math.random() * 0.03 + 0.02,
+        for (let r = 0; r < 9; r++) {
+          for (let c = 0; c < 9; c++) {
+            if (currentBoard[r][c].value === num) {
+              const cellEl = document.getElementById(`sudoku-cell-${r}-${c}`);
+              const rect = cellEl?.getBoundingClientRect();
+              if (rect && rect.width > 0) {
+                matchingCells.push({ r, c, rect });
+              } else if (boardRect && boardRect.width > 0) {
+                const cellW = boardRect.width / 9;
+                const cellH = boardRect.height / 9;
+                matchingCells.push({
+                  r,
+                  c,
+                  rect: new DOMRect(
+                    boardRect.left + c * cellW,
+                    boardRect.top + r * cellH,
+                    cellW,
+                    cellH
+                  ),
                 });
               }
             }
-
-            // Append current point to history and prune points older than 22 frames
-            digit.history.unshift({ x: cx, y: cy, time: performance.now() });
-            if (digit.history.length > 22) {
-              digit.history.pop();
-            }
-          });
-
-          animFrameLoop = requestAnimationFrame(updateFrame);
-        } else {
-          // Landing moment: numbers have fully returned to the numpad button below!
-          playParadeChime(num, soundEnabled);
-          triggerHaptic('cell', hapticsEnabled);
-
-          // Clear flying digits for this number
-          activeDigitsRef.current = [];
-
-          // Pause 120ms then proceed to next number in ascending order
-          setTimeout(() => {
-            if (!isCancelled) {
-              runNumberSequence(num + 1);
-            }
-          }, 120);
+          }
         }
-      };
 
-      animFrameLoop = requestAnimationFrame(updateFrame);
+        const destX = targetRect && targetRect.width > 0
+          ? targetRect.left + targetRect.width / 2
+          : window.innerWidth / 2 + (num - 5) * 36;
+        const destY = targetRect && targetRect.height > 0
+          ? targetRect.top + targetRect.height / 2
+          : window.innerHeight - 80;
+        const color = DIGIT_COLORS[num] || '#3b82f6';
+
+        // 3. Initialize 9 flying digits at their exact board cell coordinates
+        const digits: ActiveDigit[] = matchingCells.map(({ r, c, rect }) => {
+          const sx = rect.left + rect.width / 2;
+          const sy = rect.top + rect.height / 2;
+          return {
+            id: `${num}-${r}-${c}`,
+            num,
+            startX: sx,
+            startY: sy,
+            targetX: destX,
+            targetY: destY,
+            color,
+            history: [{ x: sx, y: sy, time: performance.now() }],
+          };
+        });
+
+        activeDigitsRef.current = digits;
+
+        // Flight Timings:
+        // - 0ms to 280ms: All 9 occurrences move slightly upward from current position (-28px)
+        // - 280ms to 1140ms: Slowly travel down into number box below along curved Bézier arc with visible trails
+        // - 1140ms: Land in box, pulse box, play harmonic chime
+        const startTime = performance.now();
+        const LIFT_DURATION = 280;
+        const TRAVEL_DURATION = 860;
+        const TOTAL_DURATION = LIFT_DURATION + TRAVEL_DURATION; // 1140ms total flight
+
+        let frameId: number;
+
+        const updateFrame = () => {
+          if (isCancelledRef.current) {
+            activeDigitsRef.current = [];
+            resolve();
+            return;
+          }
+
+          const elapsed = performance.now() - startTime;
+
+          if (elapsed < TOTAL_DURATION) {
+            activeDigitsRef.current.forEach(digit => {
+              let cx = digit.startX;
+              let cy = digit.startY;
+
+              if (elapsed < LIFT_DURATION) {
+                // Phase 1: Move slightly upward (-28px)
+                const u = easeOutQuad(elapsed / LIFT_DURATION);
+                cx = digit.startX;
+                cy = digit.startY - 28 * u;
+              } else {
+                // Phase 2: Slowly travel down into number box with visible motion trails
+                const progress = (elapsed - LIFT_DURATION) / TRAVEL_DURATION;
+                const s = easeInOutCubic(progress);
+
+                const p0x = digit.startX;
+                const p0y = digit.startY - 28;
+                const p1x = digit.startX + (digit.targetX - digit.startX) * 0.28;
+                const p1y = Math.min(p0y, digit.targetY) - 34;
+                const p2x = digit.targetX;
+                const p2y = digit.targetY;
+
+                cx = Math.pow(1 - s, 2) * p0x + 2 * (1 - s) * s * p1x + Math.pow(s, 2) * p2x;
+                cy = Math.pow(1 - s, 2) * p0y + 2 * (1 - s) * s * p1y + Math.pow(s, 2) * p2y;
+
+                // Emit stardust sparkles along trail
+                if (Math.random() < 0.45) {
+                  const angle = Math.random() * Math.PI * 2;
+                  const speed = Math.random() * 2 + 0.5;
+                  stardustRef.current.push({
+                    x: cx + (Math.random() - 0.5) * 8,
+                    y: cy + (Math.random() - 0.5) * 8,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: Math.random() * 2.8 + 1.2,
+                    color: digit.color,
+                    alpha: 0.9,
+                    decay: Math.random() * 0.03 + 0.02,
+                  });
+                }
+              }
+
+              // Prepend to motion trail history
+              digit.history.unshift({ x: cx, y: cy, time: performance.now() });
+              if (digit.history.length > 22) {
+                digit.history.pop();
+              }
+            });
+
+            frameId = requestAnimationFrame(updateFrame);
+          } else {
+            // Landing moment: all nine occurrences of this number have completed their movement!
+            playParadeChime(num, soundEnabledRef.current);
+            triggerHaptic('cell', hapticsEnabledRef.current);
+
+            // Clear active flying digits for this number
+            activeDigitsRef.current = [];
+
+            // Add to completed numbers array so board marks this number as fully gathered
+            completedNumbers.push(num);
+            onNumberStepRef.current(num, completedNumbers);
+
+            // Clean 140ms settling pause before next number starts
+            setTimeout(() => {
+              resolve();
+            }, 140);
+          }
+        };
+
+        frameId = requestAnimationFrame(updateFrame);
+      });
     };
 
-    // Kick off starting with number 1
-    const timer = setTimeout(() => {
-      runNumberSequence(1);
-    }, 120);
+    // Sequential Executor: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
+    const executeEntireSequence = async () => {
+      // 100ms pause to ensure completed board layout is measured
+      await new Promise(r => setTimeout(r, 100));
+
+      for (let n = 1; n <= 9; n++) {
+        if (isCancelledRef.current) break;
+        await animateSingleNumber(n);
+      }
+
+      if (!isCancelledRef.current) {
+        // Only after all nine numbers have finished their animations:
+        playVictoryFanfare(soundEnabledRef.current);
+        triggerHaptic('celebration', hapticsEnabledRef.current);
+
+        onNumberStepRef.current(null, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+
+        // Brief celebratory 300ms pause before opening final game completion modal
+        setTimeout(() => {
+          if (!isCancelledRef.current) {
+            onCompleteRef.current();
+          }
+        }, 300);
+      }
+    };
+
+    executeEntireSequence();
 
     return () => {
-      isCancelled = true;
-      clearTimeout(timer);
-      cancelAnimationFrame(animFrameLoop);
+      isCancelledRef.current = true;
+      isRunningRef.current = false;
     };
-  }, [isActive, board, soundEnabled, hapticsEnabled, onNumberStep, onComplete]);
+  }, [isActive]);
 
   if (!isActive) return null;
 
   return (
     <div className="fixed inset-0 z-40 pointer-events-none overflow-hidden select-none">
-      {/* Full-Screen Hardware-Accelerated Canvas for Motion Trails & Firecrackers */}
+      {/* Hardware-Accelerated Canvas for Motion Trails & Firecrackers */}
       <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
 
       {/* Top Floating Celebration Status Banner with Skip Option */}
@@ -522,7 +584,7 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
           <span className="text-xs sm:text-sm font-extrabold tracking-tight">
             Gathering Number{' '}
             <span
-              className="text-base font-mono font-black px-1.5 py-0.5 rounded-lg text-white shadow-sm"
+              className="text-base font-mono font-black px-2 py-0.5 rounded-lg text-white shadow-sm"
               style={{ backgroundColor: DIGIT_COLORS[currentNum] || 'var(--md-sys-color-primary)' }}
             >
               {currentNum}
@@ -535,10 +597,10 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
         <button
           type="button"
           onClick={() => {
-            isFinishedRef.current = true;
+            isCancelledRef.current = true;
             activeDigitsRef.current = [];
-            onNumberStep(null);
-            onComplete();
+            onNumberStepRef.current(null, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+            onCompleteRef.current();
           }}
           className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold border shadow-md hover:opacity-90 active:scale-95 transition-all"
           style={{

@@ -14,6 +14,7 @@ interface SudokuControlsProps {
   canUndo: boolean;
   disabled?: boolean;
   celebratingNumber?: number | null;
+  completedParadeNumbers?: number[];
 }
 
 export const SudokuControls: React.FC<SudokuControlsProps> = ({
@@ -28,6 +29,7 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
   canUndo,
   disabled = false,
   celebratingNumber = null,
+  completedParadeNumbers = [],
 }) => {
   return (
     <div className="w-full max-w-[480px] mx-auto space-y-4">
@@ -139,27 +141,30 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
           const placedCount = digitCounts[num] || 0;
           const isCompleted = placedCount >= 9;
           const isCelebrating = celebratingNumber === num;
+          const isParadeCompleted = completedParadeNumbers.includes(num);
 
           return (
             <button
               key={num}
               id={`numpad-btn-${num}`}
               type="button"
-              disabled={(isCompleted && !isCelebrating) || disabled}
+              disabled={(isCompleted && !isCelebrating && !isParadeCompleted) || disabled}
               onClick={() => onNumberClick(num)}
               style={{
-                backgroundColor: isCelebrating
+                backgroundColor: isCelebrating || isParadeCompleted
                   ? 'var(--md-sys-color-primary)'
                   : isCompleted
                   ? 'var(--md-sys-color-surface-container-high)'
                   : 'var(--md-sys-color-surface)',
-                borderColor: isCelebrating
+                borderColor: isCelebrating || isParadeCompleted
                   ? 'var(--md-sys-color-primary)'
                   : 'var(--md-sys-color-outline-variant)',
               }}
               className={`flex flex-col items-center justify-center py-2 sm:py-2.5 rounded-xl border transition-all active:scale-95 select-none ${
                 isCelebrating
-                  ? 'scale-115 ring-4 ring-primary/40 shadow-lg shadow-primary/30 z-20 animate-bounce'
+                  ? 'scale-115 ring-4 ring-primary/50 shadow-lg shadow-primary/40 z-20 animate-pulse'
+                  : isParadeCompleted
+                  ? 'ring-2 ring-primary/40 shadow-sm'
                   : isCompleted
                   ? 'opacity-35 cursor-not-allowed'
                   : 'hover:opacity-90 shadow-xs'
@@ -167,7 +172,7 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
             >
               <span
                 style={{
-                  color: isCelebrating
+                  color: isCelebrating || isParadeCompleted
                     ? 'var(--md-sys-color-on-primary)'
                     : isCompleted
                     ? 'var(--md-sys-color-on-surface-variant)'

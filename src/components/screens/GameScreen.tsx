@@ -63,6 +63,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   const [showConfirmQuit, setShowConfirmQuit] = useState<boolean>(false);
   const [isNumberParadeActive, setIsNumberParadeActive] = useState<boolean>(false);
   const [celebratingNumber, setCelebratingNumber] = useState<number | null>(null);
+  const [completedParadeNumbers, setCompletedParadeNumbers] = useState<number[]>([]);
   const [isVictoryModalVisible, setIsVictoryModalVisible] = useState<boolean>(false);
 
   // Timer interval
@@ -356,10 +357,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     triggerHaptic('note', settings.hapticsEnabled);
   }, [game.isPaused, game.isCompleted, game.isGameOver, game.board, onUpdateGame, settings.soundEnabled, settings.hapticsEnabled]);
 
+  // Track active number and all gathered numbers during the ascending 1-9 parade
+  const handleNumberStep = useCallback((currentNum: number | null, completed: number[]) => {
+    setCelebratingNumber(currentNum);
+    setCompletedParadeNumbers([...completed]);
+  }, []);
+
   // Handle completion of the ascending 1-9 number celebration parade
   const handleNumberParadeComplete = useCallback(() => {
     setIsNumberParadeActive(false);
     setCelebratingNumber(null);
+    setCompletedParadeNumbers([1, 2, 3, 4, 5, 6, 7, 8, 9]);
     setIsVictoryModalVisible(true);
 
     const finalCompletedGame: ActiveGame = {
@@ -376,6 +384,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       setIsVictoryModalVisible(false);
       setIsNumberParadeActive(false);
       setCelebratingNumber(null);
+      setCompletedParadeNumbers([]);
     }
   }, [game.id, game.isCompleted]);
 
@@ -414,19 +423,35 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     newBoard[row][col].notes = [];
 
     const solved = isBoardSolved(newBoard, game.solution);
+    if (solved) {
+      const boardWithFinalHint: ActiveGame = {
+        ...game,
+        board: newBoard,
+        hintsUsed: game.hintsUsed + 1,
+        isCompleted: false,
+      };
+
+      onUpdateGame(() => boardWithFinalHint);
+      playNumberEntrySound(settings.soundEnabled);
+      triggerHaptic('number', settings.hapticsEnabled);
+
+      // 1-second board freeze, then firecracker celebration & sequential 1-9 parade
+      setTimeout(() => {
+        playCelebrationFanfare(settings.soundEnabled);
+        triggerHaptic('celebration', settings.hapticsEnabled);
+        setIsNumberParadeActive(true);
+      }, 1000);
+      return;
+    }
+
     const updatedGame: ActiveGame = {
       ...game,
       board: newBoard,
       hintsUsed: game.hintsUsed + 1,
-      isCompleted: solved,
+      isCompleted: false,
     };
 
     onUpdateGame(() => updatedGame);
-
-    if (solved) {
-      playVictoryFanfare(settings.soundEnabled);
-      onGameCompleted(updatedGame);
-    }
   };
 
   // Ask Logic / Deductive Tutor
@@ -597,6 +622,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         completedHighlightCells={completedHighlightCells}
         isPaused={game.isPaused}
         celebratingNumber={celebratingNumber}
+        completedParadeNumbers={completedParadeNumbers}
       />
 
       {/* CONTROLS & NUMPAD */}
@@ -612,6 +638,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         canUndo={game.moveHistory.length > 0}
         disabled={game.isPaused || game.isCompleted || game.isGameOver}
         celebratingNumber={celebratingNumber}
+        completedParadeNumbers={completedParadeNumbers}
       />
 
       {/* Game Over Modal (Mistakes Limit Reached) */}
@@ -758,7 +785,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       <NumberCelebrationParade
         board={game.board}
         isActive={isNumberParadeActive}
-        onNumberStep={setCelebratingNumber}
+        onNumberStep={handleNumberStep}
         onComplete={handleNumberParadeComplete}
         soundEnabled={settings.soundEnabled}
         hapticsEnabled={settings.hapticsEnabled}
@@ -766,7 +793,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
       {/* Victory Modal */}
       <VictoryModal
-        isOpen={isVictoryModalVisible || (game.isCompleted && !isNumberParadeActive)}
+        isOpen={isVictoryModalVisible}
         onPlayNext={() => (onStartNewGame ? onStartNewGame(game.difficulty) : onRestartGame())}
         onPlayAgain={onRestartGame}
         onHome={() => onNavigate('home')}

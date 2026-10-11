@@ -15,6 +15,7 @@ interface SudokuBoardProps {
   completedHighlightCells?: CompletedHighlightCell[];
   isPaused?: boolean;
   celebratingNumber?: number | null;
+  completedParadeNumbers?: number[];
 }
 
 export const SudokuBoard: React.FC<SudokuBoardProps> = ({
@@ -28,6 +29,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
   completedHighlightCells = [],
   isPaused = false,
   celebratingNumber = null,
+  completedParadeNumbers = [],
 }) => {
   const { tokens } = useTheme();
 
@@ -297,8 +299,10 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                     className={`text-xl sm:text-2xl font-mono tabular-nums leading-none select-none transition-all duration-300 ${
                       cell.given ? 'font-extrabold' : 'font-bold'
                     } ${
-                      celebratingNumber !== null && cell.value <= celebratingNumber
-                        ? 'opacity-20 scale-90 blur-[0.4px]'
+                      completedParadeNumbers?.includes(cell.value)
+                        ? 'opacity-0 scale-75'
+                        : celebratingNumber === cell.value
+                        ? 'opacity-0 scale-90'
                         : ''
                     }`}
                     style={{ color: textColor }}
