@@ -53,11 +53,11 @@ export const CellNotesPopup: React.FC<CellNotesPopupProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
-      {/* Invisible dismiss backdrop */}
+      {/* Tap-outside-to-close dismiss backdrop */}
       <div
-        className="absolute inset-0 bg-black/20 backdrop-blur-[1px] transition-opacity"
+        className="absolute inset-0 bg-black/25 backdrop-blur-[1px] transition-opacity cursor-pointer"
         onClick={onClose}
-        onTouchStart={onClose}
+        onPointerDown={onClose}
         aria-hidden="true"
       />
 
@@ -65,7 +65,7 @@ export const CellNotesPopup: React.FC<CellNotesPopupProps> = ({
       <div
         ref={popupRef}
         role="dialog"
-        aria-label="Select note to add or remove"
+        aria-label="Select notes to add or remove"
         className="absolute rounded-2xl shadow-2xl overflow-hidden border-2 animate-in zoom-in-95 fade-in duration-150"
         style={{
           top: `${coords.top}px`,
@@ -77,6 +77,8 @@ export const CellNotesPopup: React.FC<CellNotesPopupProps> = ({
           boxShadow: '0 12px 36px -4px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08)',
         }}
         onClick={e => e.stopPropagation()}
+        onPointerDown={e => e.stopPropagation()}
+        onTouchStart={e => e.stopPropagation()}
       >
         {/* 3x3 Grid with crisp interior borders */}
         <div className="w-full h-full grid grid-cols-3 grid-rows-3 bg-neutral-300 dark:bg-neutral-700 gap-[1px]">

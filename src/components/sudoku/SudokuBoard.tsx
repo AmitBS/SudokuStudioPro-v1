@@ -70,7 +70,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
 
   return (
     <div className="relative w-full max-w-[480px] mx-auto aspect-square select-none">
-      {/* CSS Keyframes for smooth 2-second circular progress indicator */}
+      {/* CSS Keyframes for smooth 0.75-second (750ms) circular progress indicator */}
       <style>{`
         @keyframes fillSudokuProgress {
           0% {
@@ -193,7 +193,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                 disabled={isPaused}
                 onPointerDown={(e) => {
                   if (isPaused) return;
-                  // Only trigger 2-second long-press on empty cells
+                  // Only trigger 0.75-second (750ms) long-press on empty cells
                   if (cell.value === 0) {
                     longPressTriggeredRef.current = false;
                     pressStartPosRef.current = { x: e.clientX, y: e.clientY };
@@ -212,7 +212,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                         rect,
                         currentNotes: [...(cell.notes || [])],
                       });
-                    }, 2000);
+                    }, 750);
                   }
                 }}
                 onPointerMove={(e) => {
@@ -252,7 +252,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                   isBeingPressed ? 'ring-2 ring-inset ring-primary z-20' : ''
                 }`}
               >
-                {/* 2-Second Circular Progress Indicator */}
+                {/* 0.75-Second Circular Progress Indicator */}
                 {isBeingPressed && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
                     <svg className="w-[84%] h-[84%]" viewBox="0 0 44 44">
@@ -281,7 +281,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                         style={{
                           transformOrigin: 'center',
                           transform: 'rotate(-90deg)',
-                          animation: 'fillSudokuProgress 2000ms linear forwards',
+                          animation: 'fillSudokuProgress 750ms linear forwards',
                         }}
                       />
                     </svg>
@@ -356,7 +356,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
         </div>
       )}
 
-      {/* 3x3 Notes Selection Popup */}
+      {/* 3x3 Notes Selection Popup - Multiple Selection Allowed */}
       {notesPopupTarget && (
         <CellNotesPopup
           cellRect={notesPopupTarget.rect}
@@ -365,7 +365,18 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
             if (onToggleCellNote) {
               onToggleCellNote(notesPopupTarget.row, notesPopupTarget.col, num);
             }
-            setNotesPopupTarget(null);
+            // Keep popup open for multiple selections; toggle number in currentNotes
+            setNotesPopupTarget(prev => {
+              if (!prev) return null;
+              const has = prev.currentNotes.includes(num);
+              const nextNotes = has
+                ? prev.currentNotes.filter(n => n !== num)
+                : [...prev.currentNotes, num].sort((a, b) => a - b);
+              return {
+                ...prev,
+                currentNotes: nextNotes,
+              };
+            });
           }}
           onClose={() => setNotesPopupTarget(null)}
         />
