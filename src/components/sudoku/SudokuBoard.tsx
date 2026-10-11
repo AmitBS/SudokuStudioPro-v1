@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { BoardMatrix, CellData, CompletedHighlightCell, GameSettings, LogicStep } from '../../types/sudoku';
 import { useTheme } from '../../theme/themeContext';
+import { triggerHaptic } from '../../utils/audio';
+import { CellNotesPopup } from './CellNotesPopup';
 
 interface SudokuBoardProps {
   board: BoardMatrix;
   selectedCell: { row: number; col: number } | null;
   onSelectCell: (row: number, col: number) => void;
+  onToggleCellNote?: (row: number, col: number, num: number) => void;
   settings: GameSettings;
   activeLogicStep?: LogicStep | null;
   mistakeCells?: { row: number; col: number }[];
@@ -17,6 +20,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
   board,
   selectedCell,
   onSelectCell,
+  onToggleCellNote,
   settings,
   activeLogicStep,
   mistakeCells = [],
@@ -25,6 +29,40 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
 }) => {
   const { tokens } = useTheme();
 
+  // Long-press state for 2-second hold to add notes
+  const [progressCell, setProgressCell] = useState<{ row: number; col: number } | null>(null);
+  const [notesPopupTarget, setNotesPopupTarget] = useState<{
+    row: number;
+    col: number;
+    rect: DOMRect;
+    currentNotes: number[];
+  } | null>(null);
+
+  const longPressTimerRef = useRef<number | null>(null);
+  const pressStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  const longPressTriggeredRef = useRef<boolean>(false);
+
+  // Clear timer helper
+  const cancelLongPress = useCallback(() => {
+    if (longPressTimerRef.current !== null) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    setProgressCell(null);
+    pressStartPosRef.current = null;
+  }, []);
+
+  // Clean up on unmount or pause
+  useEffect(() => {
+    if (isPaused) {
+      cancelLongPress();
+      setNotesPopupTarget(null);
+    }
+    return () => {
+      cancelLongPress();
+    };
+  }, [isPaused, cancelLongPress]);
+
   const selectedValue =
     selectedCell && board[selectedCell.row]?.[selectedCell.col]?.value
       ? board[selectedCell.row][selectedCell.col].value
@@ -32,6 +70,22 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
 
   return (
     <div className="relative w-full max-w-[480px] mx-auto aspect-square select-none">
+      {/* CSS Keyframes for smooth 2-second circular progress indicator */}
+      <style>{`
+        @keyframes fillSudokuProgress {
+          0% {
+            stroke-dashoffset: 113.1;
+            opacity: 0.6;
+          }
+          20% {
+            opacity: 1;
+          }
+          100% {
+            stroke-dashoffset: 0;
+            opacity: 1;
+          }
+        }
+      `}</style>
       {/* 9x9 Grid Box */}
       <div
         role="grid"
@@ -127,6 +181,8 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
               textColor = 'var(--md-sys-color-cell-user)';
             }
 
+            const isBeingPressed = progressCell?.row === r && progressCell?.col === c;
+
             return (
               <button
                 key={`${r}-${c}`}
@@ -135,7 +191,52 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                 aria-label={`Row ${r + 1}, Column ${c + 1}, Value ${cell.value || 'Empty'}`}
                 aria-selected={isSelected}
                 disabled={isPaused}
-                onClick={() => onSelectCell(r, c)}
+                onPointerDown={(e) => {
+                  if (isPaused) return;
+                  // Only trigger 2-second long-press on empty cells
+                  if (cell.value === 0) {
+                    longPressTriggeredRef.current = false;
+                    pressStartPosRef.current = { x: e.clientX, y: e.clientY };
+                    const targetBtn = e.currentTarget;
+                    cancelLongPress();
+                    setProgressCell({ row: r, col: c });
+
+                    longPressTimerRef.current = window.setTimeout(() => {
+                      longPressTriggeredRef.current = true;
+                      setProgressCell(null);
+                      triggerHaptic('success');
+                      const rect = targetBtn.getBoundingClientRect();
+                      setNotesPopupTarget({
+                        row: r,
+                        col: c,
+                        rect,
+                        currentNotes: [...(cell.notes || [])],
+                      });
+                    }, 2000);
+                  }
+                }}
+                onPointerMove={(e) => {
+                  if (pressStartPosRef.current && isBeingPressed) {
+                    const dx = Math.abs(e.clientX - pressStartPosRef.current.x);
+                    const dy = Math.abs(e.clientY - pressStartPosRef.current.y);
+                    if (dx > 10 || dy > 10) {
+                      cancelLongPress();
+                    }
+                  }
+                }}
+                onPointerUp={() => {
+                  const wasTriggered = longPressTriggeredRef.current;
+                  cancelLongPress();
+                  if (!wasTriggered) {
+                    onSelectCell(r, c);
+                  }
+                }}
+                onPointerCancel={cancelLongPress}
+                onClick={() => {
+                  if (!longPressTriggeredRef.current) {
+                    onSelectCell(r, c);
+                  }
+                }}
                 style={{
                   background: cellBg,
                   ...borderRightStyle,
@@ -147,8 +248,46 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                   isSelected && !isCompletedUnit ? 'ring-2 ring-inset z-10' : ''
                 } ${
                   logicType === 'focus' ? 'ring-2 ring-inset ring-amber-500 z-10' : ''
+                } ${
+                  isBeingPressed ? 'ring-2 ring-inset ring-primary z-20' : ''
                 }`}
               >
+                {/* 2-Second Circular Progress Indicator */}
+                {isBeingPressed && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                    <svg className="w-[84%] h-[84%]" viewBox="0 0 44 44">
+                      {/* Background Track */}
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3.5"
+                        className="opacity-25"
+                        style={{ color: 'var(--md-sys-color-primary)' }}
+                      />
+                      {/* Animated Fill Circle */}
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        fill="none"
+                        stroke="var(--md-sys-color-primary)"
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        strokeDasharray="113.1"
+                        strokeDashoffset="113.1"
+                        style={{
+                          transformOrigin: 'center',
+                          transform: 'rotate(-90deg)',
+                          animation: 'fillSudokuProgress 2000ms linear forwards',
+                        }}
+                      />
+                    </svg>
+                  </div>
+                )}
+
                 {/* Value Display */}
                 {cell.value !== 0 ? (
                   <span
@@ -215,6 +354,21 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
           <div className="text-xl font-bold tracking-tight mb-2">Game Paused</div>
           <div className="text-sm opacity-80">Tap Resume to continue</div>
         </div>
+      )}
+
+      {/* 3x3 Notes Selection Popup */}
+      {notesPopupTarget && (
+        <CellNotesPopup
+          cellRect={notesPopupTarget.rect}
+          currentNotes={notesPopupTarget.currentNotes}
+          onSelectNumber={(num) => {
+            if (onToggleCellNote) {
+              onToggleCellNote(notesPopupTarget.row, notesPopupTarget.col, num);
+            }
+            setNotesPopupTarget(null);
+          }}
+          onClose={() => setNotesPopupTarget(null)}
+        />
       )}
     </div>
   );

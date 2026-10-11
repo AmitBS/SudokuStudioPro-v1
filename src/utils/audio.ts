@@ -250,41 +250,66 @@ export function playEraseSound(enabled = true): void {
   }
 }
 
-// 5. ERROR SOUND (Soft low buzz - not jarring)
-export function playErrorSound(enabled = true): void {
+// 5. CRITICAL ERROR BUZZ SOUND (Deep, harsh dual-oscillator buzzer with aggressive acoustic beating)
+export function playCriticalErrorBuzz(enabled = true): void {
   if (!enabled) return;
-  if (!canPlaySound('NUMBER_ENTRY', 60)) return;
+  if (!canPlaySound('NUMBER_ENTRY', 40)) return;
 
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
     const now = ctx.currentTime;
 
-    const osc = ctx.createOscillator();
+    // Dual detuned sawtooth oscillators producing deep mechanical discordant beating
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
     const gain = ctx.createGain();
     const filter = ctx.createBiquadFilter();
 
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(200, now);
-    osc.frequency.setValueAtTime(150, now + 0.06);
+    osc1.type = 'sawtooth';
+    osc1.frequency.setValueAtTime(110, now); // Low A2
+    osc1.frequency.exponentialRampToValueAtTime(90, now + 0.25);
 
+    osc2.type = 'sawtooth';
+    osc2.frequency.setValueAtTime(117.5, now); // Slightly detuned sharp discordant note
+    osc2.frequency.exponentialRampToValueAtTime(94, now + 0.25);
+
+    // Low-pass filter with resonant bite to shape raw harsh buzz
     filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(450, now);
+    filter.frequency.setValueAtTime(750, now);
+    filter.frequency.exponentialRampToValueAtTime(350, now + 0.25);
+    filter.Q.setValueAtTime(3.5, now);
 
+    // Assertive volume envelope: instantaneous attack, sustained buzz, sharp cut
     gain.gain.setValueAtTime(0.001, now);
-    gain.gain.linearRampToValueAtTime(0.06, now + 0.005);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+    gain.gain.linearRampToValueAtTime(0.24, now + 0.008);
+    gain.gain.setValueAtTime(0.22, now + 0.18);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
 
-    osc.connect(filter);
+    osc1.connect(filter);
+    osc2.connect(filter);
     filter.connect(gain);
     gain.connect(ctx.destination);
 
-    osc.start(now);
-    osc.stop(now + 0.15);
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.27);
+    osc2.stop(now + 0.27);
+
+    // Assertive tactile vibration for mobile users
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate([120, 60, 160]);
+      } catch {
+        // Ignore
+      }
+    }
   } catch {
-    // Ignore
+    // Ignore audio errors
   }
 }
+
+export const playErrorSound = playCriticalErrorBuzz;
 
 // 6. UNIT COMPLETION SOUND (1, 2, or 3 simultaneous rows/columns/boxes)
 // Uses a short, rewarding musical sequence with ascending tones

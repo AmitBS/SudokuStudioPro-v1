@@ -23,6 +23,7 @@ import {
   playNoteEntrySound,
   playEraseSound,
   playErrorSound,
+  playCriticalErrorBuzz,
   playHintSound,
   playUnitCompletionSound,
   playCelebrationFanfare,
@@ -151,7 +152,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           mistakes: newMistakes,
           isGameOver,
         }));
-        playErrorSound(settings.soundEnabled);
+        playCriticalErrorBuzz(settings.soundEnabled);
         triggerHaptic('error', settings.hapticsEnabled);
         return;
       }
@@ -283,6 +284,43 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     playTapSound(settings.soundEnabled);
     triggerHaptic('light', settings.hapticsEnabled);
   }, [game.moveHistory, game.isPaused, game.isCompleted, game.isGameOver, settings.soundEnabled, settings.hapticsEnabled, onUpdateGame]);
+
+  // Dedicated note toggle handler for 2-second long-press 3x3 notes popup
+  const handleToggleCellNote = useCallback((row: number, col: number, num: number) => {
+    if (game.isPaused || game.isCompleted || game.isGameOver) return;
+    const targetCell = game.board[row]?.[col];
+    if (!targetCell || targetCell.given || targetCell.value !== 0) return;
+
+    setSelectedCell({ row, col });
+    const prevNotes = [...targetCell.notes];
+    const isRemoval = prevNotes.includes(num);
+    const newNotes = isRemoval
+      ? prevNotes.filter(n => n !== num)
+      : [...prevNotes, num].sort((a, b) => a - b);
+
+    onUpdateGame(prev => {
+      const newBoard = prev.board.map(r => r.map(c => ({ ...c, notes: [...c.notes] })));
+      newBoard[row][col].notes = newNotes;
+      return {
+        ...prev,
+        board: newBoard,
+        moveHistory: [
+          ...prev.moveHistory,
+          {
+            row,
+            col,
+            prevValue: targetCell.value,
+            newValue: targetCell.value,
+            prevNotes,
+            newNotes,
+            isNoteMove: true,
+          },
+        ],
+      };
+    });
+    playNoteEntrySound(settings.soundEnabled, isRemoval);
+    triggerHaptic('note', settings.hapticsEnabled);
+  }, [game.isPaused, game.isCompleted, game.isGameOver, game.board, onUpdateGame, settings.soundEnabled, settings.hapticsEnabled]);
 
   // Quick Hint
   const handleHint = () => {
@@ -495,6 +533,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         board={game.board}
         selectedCell={selectedCell}
         onSelectCell={handleSelectCell}
+        onToggleCellNote={handleToggleCellNote}
         settings={settings}
         activeLogicStep={activeLogicStep}
         mistakeCells={mistakes}
