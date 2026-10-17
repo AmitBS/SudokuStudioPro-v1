@@ -1,5 +1,7 @@
 import React from 'react';
 import { useTheme } from '../../theme/themeContext';
+import { SudokuInputMode } from '../../types/sudoku';
+import { SudokuValueDisplay, getSymbolAriaLabel } from '../../utils/sudokuSymbols';
 import { Undo2, Eraser, Edit3, Lightbulb, Compass } from 'lucide-react';
 
 interface SudokuControlsProps {
@@ -15,6 +17,7 @@ interface SudokuControlsProps {
   disabled?: boolean;
   celebratingNumber?: number | null;
   completedParadeNumbers?: number[];
+  inputMode?: SudokuInputMode;
 }
 
 export const SudokuControls: React.FC<SudokuControlsProps> = ({
@@ -30,6 +33,7 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
   disabled = false,
   celebratingNumber = null,
   completedParadeNumbers = [],
+  inputMode = 'numbers',
 }) => {
   return (
     <div className="w-full max-w-[480px] mx-auto space-y-4">
@@ -148,6 +152,7 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
               key={num}
               id={`numpad-btn-${num}`}
               type="button"
+              aria-label={getSymbolAriaLabel(num, inputMode)}
               disabled={(isCompleted && !isCelebrating && !isParadeCompleted) || disabled}
               onClick={() => onNumberClick(num)}
               style={{
@@ -178,9 +183,9 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
                     ? 'var(--md-sys-color-on-surface-variant)'
                     : 'var(--md-sys-color-on-surface)',
                 }}
-                className="text-lg sm:text-xl font-bold font-mono"
+                className="text-lg sm:text-xl font-bold font-mono flex items-center justify-center h-6 sm:h-7"
               >
-                {num}
+                <SudokuValueDisplay value={num} inputMode={inputMode} size="md" />
               </span>
               <span
                 style={{

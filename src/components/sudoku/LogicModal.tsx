@@ -1,6 +1,7 @@
 import React from 'react';
-import { LogicStep } from '../../types/sudoku';
+import { LogicStep, SudokuInputMode } from '../../types/sudoku';
 import { useTheme } from '../../theme/themeContext';
+import { SudokuSymbol, getSymbolName } from '../../utils/sudokuSymbols';
 import { Compass, CheckCircle2, AlertCircle, X, ArrowRight } from 'lucide-react';
 
 interface LogicModalProps {
@@ -8,6 +9,7 @@ interface LogicModalProps {
   isOpen: boolean;
   onClose: () => void;
   onApplyStep: () => void;
+  inputMode?: SudokuInputMode;
 }
 
 export const LogicModal: React.FC<LogicModalProps> = ({
@@ -15,6 +17,7 @@ export const LogicModal: React.FC<LogicModalProps> = ({
   isOpen,
   onClose,
   onApplyStep,
+  inputMode = 'numbers',
 }) => {
   const { activePrimary, activeOnPrimary } = useTheme();
 
@@ -100,9 +103,17 @@ export const LogicModal: React.FC<LogicModalProps> = ({
                   color: '#b45309',
                   borderColor: 'rgba(245, 158, 11, 0.4)',
                 }}
-                className="px-2.5 py-1 rounded-md font-bold border"
+                className="px-2.5 py-1 rounded-md font-bold border inline-flex items-center gap-1.5"
               >
-                Value: {step.targetValue}
+                <span>Value:</span>
+                {inputMode === 'symbols' ? (
+                  <span className="inline-flex items-center gap-1">
+                    <SudokuSymbol value={step.targetValue} className="w-4 h-4" />
+                    <span className="text-[11px] font-normal">({getSymbolName(step.targetValue)})</span>
+                  </span>
+                ) : (
+                  <span>{step.targetValue}</span>
+                )}
               </span>
             )}
             {step.involvedCandidates && step.involvedCandidates.length > 0 && (
@@ -112,9 +123,18 @@ export const LogicModal: React.FC<LogicModalProps> = ({
                   color: 'var(--md-sys-color-on-surface-variant)',
                   borderColor: 'var(--md-sys-color-outline-variant)',
                 }}
-                className="px-2.5 py-1 rounded-md border"
+                className="px-2.5 py-1 rounded-md border inline-flex items-center gap-1.5"
               >
-                Candidates: [{step.involvedCandidates.join(', ')}]
+                <span>Candidates:</span>
+                {inputMode === 'symbols' ? (
+                  <span className="inline-flex items-center gap-1">
+                    {step.involvedCandidates.map(c => (
+                      <SudokuSymbol key={c} value={c} className="w-3.5 h-3.5" title={getSymbolName(c)} />
+                    ))}
+                  </span>
+                ) : (
+                  <span>[{step.involvedCandidates.join(', ')}]</span>
+                )}
               </span>
             )}
           </div>

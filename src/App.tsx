@@ -37,6 +37,8 @@ const DEFAULT_SETTINGS: GameSettings = {
   accentColor: 'indigo',
   soundEnabled: true,
   hapticsEnabled: true,
+  completionAnimationStyle: 'ribbon',
+  inputMode: 'numbers',
 };
 
 const DEFAULT_STATS: PlayerStats = {
@@ -398,6 +400,7 @@ function MainApp() {
             onRestartGame={handleRestartGame}
             onStartNewGame={handleStartNewGame}
             onNavigate={setCurrentScreen}
+            onUpdateSettings={handleUpdateSettings}
           />
         )}
 

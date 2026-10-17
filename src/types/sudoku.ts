@@ -8,6 +8,8 @@ export type MistakesMode = 'three' | 'unlimited' | 'off';
 
 export type HintsMode = 'logic' | 'direct';
 
+export type CompletionAnimationStyle = 'ribbon' | 'numbers_only';
+
 export type Screen = 'home' | 'game' | 'settings' | 'daily' | 'capture' | 'history' | 'stats';
 
 export interface CellData {
@@ -30,6 +32,8 @@ export interface CompletedHighlightCell {
   ringColor: string;
 }
 
+export type SudokuInputMode = 'numbers' | 'symbols';
+
 export interface MoveRecord {
   row: number;
   col: number;
@@ -38,6 +42,7 @@ export interface MoveRecord {
   prevNotes: number[];
   newNotes: number[];
   isNoteMove: boolean;
+  clearedNotes?: { row: number; col: number; notes: number[] }[];
 }
 
 export interface LogicStep {
@@ -65,6 +70,8 @@ export interface GameSettings {
   accentColor: AccentColor;
   soundEnabled: boolean;
   hapticsEnabled: boolean;
+  completionAnimationStyle: CompletionAnimationStyle;
+  inputMode: SudokuInputMode;
 }
 
 export interface ActiveGame {

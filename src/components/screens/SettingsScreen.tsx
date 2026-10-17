@@ -1,5 +1,5 @@
 import React from 'react';
-import { GameSettings, HintsMode, MistakesMode, Screen, ThemeMode } from '../../types/sudoku';
+import { CompletionAnimationStyle, GameSettings, HintsMode, MistakesMode, Screen, SudokuInputMode, ThemeMode } from '../../types/sudoku';
 import { useTheme } from '../../theme/themeContext';
 import { MaterialSwitch } from '../common/MaterialSwitch';
 import { SegmentedControl } from '../common/SegmentedControl';
@@ -81,6 +81,33 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             borderColor: 'var(--md-sys-color-outline-variant)',
           }}
         >
+          {/* Sudoku Input Mode */}
+          <div className="pb-4 space-y-2">
+            <div
+              className="text-base font-semibold"
+              style={{ color: 'var(--md-sys-color-on-surface)' }}
+            >
+              Sudoku Input Mode
+            </div>
+            <div
+              className="text-sm"
+              style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
+            >
+              Play with classic numbers 1–9 or high-contrast geometric symbols.
+            </div>
+            <div className="pt-2">
+              <SegmentedControl<SudokuInputMode>
+                options={[
+                  { value: 'numbers', label: 'Numbers (1–9)' },
+                  { value: 'symbols', label: 'Symbols' },
+                ]}
+                value={settings.inputMode || 'numbers'}
+                onChange={val => onUpdateSettings({ inputMode: val })}
+                ariaLabel="Sudoku Input Mode"
+              />
+            </div>
+          </div>
+
           {/* Auto notes */}
           <MaterialSwitch
             id="setting-auto-notes"
@@ -249,6 +276,44 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               value={accentColor}
               onChange={handleAccentChange}
             />
+          </div>
+
+          {/* Completion Animation Style: Show Ribbon / Numbers Only */}
+          <div
+            id="setting-completion-animation"
+            className="space-y-2.5 pt-4 border-t"
+            style={{ borderColor: 'var(--md-sys-color-outline-variant)' }}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <label
+                  htmlFor="setting-completion-animation-toggle"
+                  className="block text-base font-semibold"
+                  style={{ color: 'var(--md-sys-color-on-surface)' }}
+                >
+                  Show Ribbon / Numbers Only
+                </label>
+                <div
+                  className="text-sm font-normal mt-0.5 leading-relaxed"
+                  style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
+                >
+                  {settings.completionAnimationStyle === 'numbers_only'
+                    ? 'Numbers Only: Display only the moving numbers along their paths, without ribbon shapes.'
+                    : 'Ribbon Style: Display motion trail ribbons filled with the moving number, using its existing color.'}
+                </div>
+              </div>
+            </div>
+            <div className="pt-1">
+              <SegmentedControl<CompletionAnimationStyle>
+                options={[
+                  { value: 'ribbon', label: 'Show Ribbon' },
+                  { value: 'numbers_only', label: 'Numbers Only' },
+                ]}
+                value={settings.completionAnimationStyle || 'ribbon'}
+                onChange={val => onUpdateSettings({ completionAnimationStyle: val })}
+                ariaLabel="Show Ribbon / Numbers Only"
+              />
+            </div>
           </div>
         </div>
       </section>

@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Difficulty, Screen } from '../../types/sudoku';
+import { Difficulty, Screen, SudokuInputMode } from '../../types/sudoku';
 import { useTheme } from '../../theme/themeContext';
 import { countSolutions, cloneGrid, isValid } from '../../utils/sudokuEngine';
+import { SudokuValueDisplay } from '../../utils/sudokuSymbols';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -20,6 +21,7 @@ import {
 interface CaptureScreenProps {
   onStartCustomGame: (puzzle: number[][], difficulty: Difficulty) => void;
   onNavigate: (screen: Screen) => void;
+  inputMode?: SudokuInputMode;
 }
 
 const SAMPLE_PRESETS: { name: string; difficulty: Difficulty; grid: number[][] }[] = [
@@ -73,6 +75,7 @@ const SAMPLE_PRESETS: { name: string; difficulty: Difficulty; grid: number[][] }
 export const CaptureScreen: React.FC<CaptureScreenProps> = ({
   onStartCustomGame,
   onNavigate,
+  inputMode = 'numbers',
 }) => {
   const { isDark } = useTheme();
 

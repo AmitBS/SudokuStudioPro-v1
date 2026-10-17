@@ -1,11 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../../theme/themeContext';
+import { SudokuInputMode } from '../../types/sudoku';
+import { SudokuValueDisplay, getSymbolAriaLabel } from '../../utils/sudokuSymbols';
 
 interface CellNotesPopupProps {
   cellRect: DOMRect;
   currentNotes: number[];
   onSelectNumber: (num: number) => void;
   onClose: () => void;
+  inputMode?: SudokuInputMode;
 }
 
 export const CellNotesPopup: React.FC<CellNotesPopupProps> = ({
@@ -13,6 +16,7 @@ export const CellNotesPopup: React.FC<CellNotesPopupProps> = ({
   currentNotes,
   onSelectNumber,
   onClose,
+  inputMode = 'numbers',
 }) => {
   const { tokens } = useTheme();
   const popupRef = useRef<HTMLDivElement>(null);
@@ -20,20 +24,54 @@ export const CellNotesPopup: React.FC<CellNotesPopupProps> = ({
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const dragStartRef = useRef<{ clientX: number; clientY: number; startLeft: number; startTop: number } | null>(null);
 
-  const POPUP_WIDTH = 172;
-  const POPUP_HEIGHT = 198;
-  const MARGIN = 8;
+  const POPUP_WIDTH = 176;
+  const POPUP_HEIGHT = 202;
+  const MARGIN = 10;
 
-  // Initialize position near the pressed cell
+  // Initialize position near the pressed cell without covering surrounding cells unnecessarily
   useEffect(() => {
-    let left = cellRect.left + cellRect.width / 2 - POPUP_WIDTH / 2;
-    left = Math.max(MARGIN, Math.min(window.innerWidth - POPUP_WIDTH - MARGIN, left));
+    const vWidth = window.innerWidth;
+    const vHeight = window.innerHeight;
+    const isLandscape = vWidth > vHeight && vWidth >= 640;
 
-    let top = cellRect.top - POPUP_HEIGHT - 10;
-    if (top < MARGIN + 40) {
-      top = cellRect.bottom + 10;
+    let left = 0;
+    let top = 0;
+
+    if (isLandscape) {
+      // In landscape orientation: prefer placing popup to the right or left of the cell/board
+      const spaceRight = vWidth - cellRect.right;
+      const spaceLeft = cellRect.left;
+
+      if (spaceRight >= POPUP_WIDTH + MARGIN) {
+        left = cellRect.right + 12;
+      } else if (spaceLeft >= POPUP_WIDTH + MARGIN) {
+        left = cellRect.left - POPUP_WIDTH - 12;
+      } else {
+        left = cellRect.left + cellRect.width / 2 - POPUP_WIDTH / 2;
+      }
+
+      // Vertically center with the cell, clamped within viewport
+      top = cellRect.top + cellRect.height / 2 - POPUP_HEIGHT / 2;
+    } else {
+      // In portrait orientation: prefer placement below or above the cell
+      const spaceBelow = vHeight - cellRect.bottom;
+      const spaceAbove = cellRect.top;
+
+      if (spaceBelow >= POPUP_HEIGHT + 16) {
+        top = cellRect.bottom + 10;
+      } else if (spaceAbove >= POPUP_HEIGHT + 16) {
+        top = cellRect.top - POPUP_HEIGHT - 10;
+      } else {
+        top = spaceBelow >= spaceAbove ? cellRect.bottom + 6 : cellRect.top - POPUP_HEIGHT - 6;
+      }
+
+      // Horizontally center on the cell
+      left = cellRect.left + cellRect.width / 2 - POPUP_WIDTH / 2;
     }
-    top = Math.max(MARGIN, Math.min(window.innerHeight - POPUP_HEIGHT - MARGIN, top));
+
+    // Strict boundary clamping so all 9 choices are 100% visible and never clipped
+    left = Math.max(MARGIN, Math.min(vWidth - POPUP_WIDTH - MARGIN, left));
+    top = Math.max(MARGIN, Math.min(vHeight - POPUP_HEIGHT - MARGIN, top));
 
     setCoords({ top, left });
   }, [cellRect]);
@@ -175,13 +213,14 @@ export const CellNotesPopup: React.FC<CellNotesPopupProps> = ({
         <div className="w-full flex-1 grid grid-cols-3 grid-rows-3 bg-neutral-300 dark:bg-neutral-700 gap-[1px]">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => {
             const isNotePresent = currentNotes.includes(num);
+            const labelText = getSymbolAriaLabel(num, inputMode);
 
             return (
               <button
                 key={num}
                 type="button"
                 onClick={() => onSelectNumber(num)}
-                aria-label={`Toggle note ${num}${isNotePresent ? ' (currently active)' : ''}`}
+                aria-label={`Toggle note ${labelText}${isNotePresent ? ' (currently active)' : ''}`}
                 style={{
                   backgroundColor: isNotePresent
                     ? 'var(--md-sys-color-primary)'
@@ -190,13 +229,13 @@ export const CellNotesPopup: React.FC<CellNotesPopupProps> = ({
                     ? 'var(--md-sys-color-on-primary)'
                     : 'var(--md-sys-color-on-surface)',
                 }}
-                className={`relative flex flex-col items-center justify-center transition-all active:scale-95 select-none focus:outline-none ${
+                className={`relative flex flex-col items-center justify-center p-2 transition-all active:scale-95 select-none focus:outline-none ${
                   isNotePresent
                     ? 'font-extrabold shadow-inner'
                     : 'font-bold hover:opacity-85'
                 }`}
               >
-                <span className="text-lg font-mono leading-none">{num}</span>
+                <SudokuValueDisplay value={num} inputMode={inputMode} size="md" />
                 {isNotePresent && (
                   <span className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-current opacity-80" />
                 )}

@@ -3,6 +3,7 @@ import { BoardMatrix, CellData, CompletedHighlightCell, GameSettings, LogicStep 
 import { useTheme } from '../../theme/themeContext';
 import { triggerHaptic } from '../../utils/audio';
 import { CellNotesPopup } from './CellNotesPopup';
+import { SudokuValueDisplay, getSymbolAriaLabel } from '../../utils/sudokuSymbols';
 
 interface SudokuBoardProps {
   board: BoardMatrix;
@@ -102,7 +103,9 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
       >
         {board.map((row, r) =>
           row.map((cell, c) => {
-            const isSelected = selectedCell?.row === r && selectedCell?.col === c;
+            const isSelected =
+              (selectedCell?.row === r && selectedCell?.col === c) ||
+              (notesPopupTarget?.row === r && notesPopupTarget?.col === c);
             const isSameNumber =
               settings.highlightSameNumbers &&
               selectedValue &&
@@ -193,11 +196,18 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                 id={`sudoku-cell-${r}-${c}`}
                 type="button"
                 role="gridcell"
-                aria-label={`Row ${r + 1}, Column ${c + 1}, Value ${cell.value || 'Empty'}`}
+                aria-label={
+                  cell.value !== 0
+                    ? `Row ${r + 1}, Column ${c + 1}, ${getSymbolAriaLabel(cell.value, settings.inputMode)}`
+                    : `Row ${r + 1}, Column ${c + 1}, Empty`
+                }
                 aria-selected={isSelected}
                 disabled={isPaused}
                 onPointerDown={(e) => {
                   if (isPaused) return;
+                  // Immediately update selected cell to pressed cell so visual highlight appears instantaneously
+                  onSelectCell(r, c);
+
                   // Only trigger 0.5-second (500ms) long-press on empty cells
                   if (cell.value === 0) {
                     longPressTriggeredRef.current = false;
@@ -210,6 +220,8 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                       longPressTriggeredRef.current = true;
                       setProgressCell(null);
                       triggerHaptic('success');
+                      // Reaffirm selection of this exact cell before opening popup
+                      onSelectCell(r, c);
                       const rect = targetBtn.getBoundingClientRect();
                       setNotesPopupTarget({
                         row: r,
@@ -296,7 +308,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                 {/* Value Display */}
                 {cell.value !== 0 ? (
                   <span
-                    className={`text-xl sm:text-2xl font-mono tabular-nums leading-none select-none transition-all duration-300 ${
+                    className={`text-xl sm:text-2xl font-mono tabular-nums leading-none select-none transition-all duration-300 flex items-center justify-center ${
                       cell.given ? 'font-extrabold' : 'font-bold'
                     } ${
                       completedParadeNumbers?.includes(cell.value)
@@ -307,7 +319,11 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                     }`}
                     style={{ color: textColor }}
                   >
-                    {cell.value}
+                    <SudokuValueDisplay
+                      value={cell.value}
+                      inputMode={settings.inputMode}
+                      size="md"
+                    />
                   </span>
                 ) : cell.notes && cell.notes.length > 0 ? (
                   /* 3x3 Notes Matrix */
@@ -333,7 +349,11 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                               : 'opacity-0'
                           }`}
                         >
-                          {n}
+                          <SudokuValueDisplay
+                            value={n}
+                            inputMode={settings.inputMode}
+                            isNote
+                          />
                         </div>
                       );
                     })}
@@ -372,6 +392,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
         <CellNotesPopup
           cellRect={notesPopupTarget.rect}
           currentNotes={notesPopupTarget.currentNotes}
+          inputMode={settings.inputMode}
           onSelectNumber={(num) => {
             if (onToggleCellNote) {
               onToggleCellNote(notesPopupTarget.row, notesPopupTarget.col, num);

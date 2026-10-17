@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { BoardMatrix } from '../../types/sudoku';
+import { BoardMatrix, CompletionAnimationStyle, SudokuInputMode } from '../../types/sudoku';
 import { playParadeChime, playVictoryFanfare, triggerHaptic } from '../../utils/audio';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { drawSymbolOnCanvas, SudokuValueDisplay } from '../../utils/sudokuSymbols';
+import { Sparkles, ArrowRight, Layers, Hash } from 'lucide-react';
 
 interface NumberCelebrationParadeProps {
   board: BoardMatrix;
@@ -10,6 +11,9 @@ interface NumberCelebrationParadeProps {
   onComplete: () => void;
   soundEnabled: boolean;
   hapticsEnabled: boolean;
+  animationStyle?: CompletionAnimationStyle;
+  onToggleAnimationStyle?: () => void;
+  inputMode?: SudokuInputMode;
 }
 
 interface TrailPoint {
@@ -88,6 +92,9 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
   onComplete,
   soundEnabled,
   hapticsEnabled,
+  animationStyle = 'ribbon',
+  onToggleAnimationStyle,
+  inputMode = 'numbers',
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [currentNum, setCurrentNum] = useState<number>(1);
@@ -107,6 +114,12 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
 
   const hapticsEnabledRef = useRef(hapticsEnabled);
   hapticsEnabledRef.current = hapticsEnabled;
+
+  const animationStyleRef = useRef<CompletionAnimationStyle>(animationStyle);
+  animationStyleRef.current = animationStyle;
+
+  const inputModeRef = useRef<SudokuInputMode>(inputMode);
+  inputModeRef.current = inputMode;
 
   const isCancelledRef = useRef<boolean>(false);
   const isRunningRef = useRef<boolean>(false);
@@ -235,7 +248,9 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
         return true;
       });
 
-      // --- D. Render Traveling Numbers with Visible Motion Trails ---
+      // --- D. Render Traveling Numbers with Motion Trails ---
+      const isRibbon = (animationStyleRef.current || 'ribbon') === 'ribbon';
+
       activeDigitsRef.current.forEach(digit => {
         const history = digit.history;
         if (history.length === 0) return;
@@ -243,68 +258,155 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
         const head = history[0];
         const numColor = digit.color;
 
-        // 1. Continuous Luminous Motion Trail Ribbon
-        if (history.length > 2) {
-          ctx.save();
-          ctx.lineCap = 'round';
-          ctx.lineJoin = 'round';
+        if (isRibbon) {
+          // ----------------------------------------------------
+          // ANIMATION STYLE 1: RIBBON STYLE
+          // "Display motion trail ribbons filled with the moving number, using its existing color."
+          // ----------------------------------------------------
 
-          for (let i = 0; i < history.length - 1; i++) {
-            const p1 = history[i];
-            const p2 = history[i + 1];
-            const ratio = 1 - i / history.length;
-            const alpha = Math.max(0, Math.min(0.85, ratio * 0.85));
-            const lineWidth = Math.max(2, ratio * 20);
+          // 1. Smooth, luminous ribbon band in existing number color
+          if (history.length > 2) {
+            ctx.save();
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
 
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.lineWidth = lineWidth;
-            ctx.strokeStyle = numColor;
-            ctx.globalAlpha = alpha;
-            ctx.shadowColor = numColor;
-            ctx.shadowBlur = 14;
-            ctx.stroke();
-          }
-          ctx.restore();
-        }
+            for (let i = 0; i < history.length - 1; i++) {
+              const p1 = history[i];
+              const p2 = history[i + 1];
+              const ratio = 1 - i / history.length;
+              const alpha = Math.max(0, Math.min(0.85, ratio * 0.85));
+              const lineWidth = Math.max(3, ratio * 24);
 
-        // 2. Visible Ghost Echo Afterimages Behind the Traveling Number
-        const echoIndices = [4, 8, 12, 16];
-        echoIndices.forEach((idx, step) => {
-          if (idx < history.length) {
-            const echoPt = history[idx];
-            const echoAlpha = (1 - (step + 1) * 0.22) * 0.55;
-            const echoScale = 1 - (step + 1) * 0.12;
+              ctx.beginPath();
+              ctx.moveTo(p1.x, p1.y);
+              ctx.lineTo(p2.x, p2.y);
+              ctx.lineWidth = lineWidth;
+              ctx.strokeStyle = numColor;
+              ctx.globalAlpha = alpha;
+              ctx.shadowColor = numColor;
+              ctx.shadowBlur = 14;
+              ctx.stroke();
+            }
+            ctx.restore();
 
-            if (echoAlpha > 0.05) {
+            // 2. Motion trail ribbons FILLED with the moving number or symbol along the ribbon path!
+            for (let i = 2; i < history.length - 1; i += 3) {
+              const pt = history[i];
+              const ratio = 1 - i / history.length;
+              const alpha = Math.max(0.2, ratio * 0.95);
+              const fontSize = Math.max(10, Math.round(11 + ratio * 5));
+
               ctx.save();
-              ctx.globalAlpha = echoAlpha;
-              ctx.translate(echoPt.x, echoPt.y);
-              ctx.scale(echoScale, echoScale);
+              ctx.globalAlpha = alpha;
+              ctx.translate(pt.x, pt.y);
 
-              const badgeSize = 34;
-              const radius = 9;
+              // Orient with the tangent angle of the ribbon motion
+              const prevPt = history[Math.max(0, i - 1)];
+              const angle = Math.atan2(prevPt.y - pt.y, prevPt.x - pt.x);
+              ctx.rotate(angle);
 
+              if (inputModeRef.current === 'symbols') {
+                drawSymbolOnCanvas(ctx, digit.num, 0, 0, fontSize * 1.15, '#ffffff');
+              } else {
+                ctx.font = `900 ${fontSize}px monospace`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#ffffff';
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+                ctx.shadowBlur = 3;
+                ctx.fillText(String(digit.num), 0, 0);
+              }
+              ctx.restore();
+            }
+          }
+
+          // 3. Ghost Echo Afterimages Behind Head
+          const echoIndices = [4, 8, 12, 16];
+          echoIndices.forEach((idx, step) => {
+            if (idx < history.length) {
+              const echoPt = history[idx];
+              const echoAlpha = (1 - (step + 1) * 0.22) * 0.55;
+              const echoScale = 1 - (step + 1) * 0.12;
+
+              if (echoAlpha > 0.05) {
+                ctx.save();
+                ctx.globalAlpha = echoAlpha;
+                ctx.translate(echoPt.x, echoPt.y);
+                ctx.scale(echoScale, echoScale);
+
+                const badgeSize = 34;
+                const radius = 9;
+
+                ctx.beginPath();
+                ctx.roundRect(-badgeSize / 2, -badgeSize / 2, badgeSize, badgeSize, radius);
+                ctx.fillStyle = numColor;
+                ctx.shadowColor = numColor;
+                ctx.shadowBlur = 10;
+                ctx.fill();
+
+                if (inputModeRef.current === 'symbols') {
+                  drawSymbolOnCanvas(ctx, digit.num, 0, 0, 18, '#ffffff');
+                } else {
+                  ctx.font = 'bold 20px monospace';
+                  ctx.textAlign = 'center';
+                  ctx.textBaseline = 'middle';
+                  ctx.fillStyle = '#ffffff';
+                  ctx.fillText(String(digit.num), 0, 1);
+                }
+
+                ctx.restore();
+              }
+            }
+          });
+        } else {
+          // ----------------------------------------------------
+          // ANIMATION STYLE 2: NUMBERS / SYMBOLS ONLY
+          // "Display only the moving numbers along their paths, without ribbon shapes."
+          // ----------------------------------------------------
+          // Absolutely NO ribbon shapes or strokes drawn! Only distinct moving tiles along the path.
+          const numberStreamIndices = [3, 6, 9, 12, 15, 18];
+          numberStreamIndices.forEach((idx, step) => {
+            if (idx < history.length) {
+              const streamPt = history[idx];
+              const ratio = 1 - (step + 1) * 0.14;
+              const alpha = Math.max(0.12, ratio * 0.85);
+              const badgeSize = Math.max(18, Math.round(34 * ratio));
+              const radius = Math.max(4, Math.round(badgeSize * 0.26));
+
+              ctx.save();
+              ctx.globalAlpha = alpha;
+              ctx.translate(streamPt.x, streamPt.y);
+
+              // Discrete glowing tile without ribbon shape
               ctx.beginPath();
               ctx.roundRect(-badgeSize / 2, -badgeSize / 2, badgeSize, badgeSize, radius);
               ctx.fillStyle = numColor;
               ctx.shadowColor = numColor;
-              ctx.shadowBlur = 10;
+              ctx.shadowBlur = 8;
               ctx.fill();
 
-              ctx.font = 'bold 20px monospace';
-              ctx.textAlign = 'center';
-              ctx.textBaseline = 'middle';
-              ctx.fillStyle = '#ffffff';
-              ctx.fillText(String(digit.num), 0, 1);
+              ctx.lineWidth = 1.5;
+              ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+              ctx.shadowBlur = 0;
+              ctx.stroke();
+
+              if (inputModeRef.current === 'symbols') {
+                drawSymbolOnCanvas(ctx, digit.num, 0, 0, Math.round(badgeSize * 0.58), '#ffffff');
+              } else {
+                const fontSize = Math.max(11, Math.round(badgeSize * 0.58));
+                ctx.font = `bold ${fontSize}px monospace`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(String(digit.num), 0, 1);
+              }
 
               ctx.restore();
             }
-          }
-        });
+          });
+        }
 
-        // 3. Lead Number Tile at Head
+        // 4. Lead Number/Symbol Tile at Head (Active in both styles)
         ctx.save();
         ctx.translate(head.x, head.y);
         ctx.globalAlpha = 1;
@@ -326,12 +428,16 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
         ctx.shadowBlur = 0;
         ctx.stroke();
 
-        // Bold white numeral
-        ctx.font = '900 22px monospace';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(String(digit.num), 0, 1);
+        if (inputModeRef.current === 'symbols') {
+          drawSymbolOnCanvas(ctx, digit.num, 0, 0, 22, '#ffffff');
+        } else {
+          // Bold white numeral
+          ctx.font = '900 22px monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(String(digit.num), 0, 1);
+        }
 
         ctx.restore();
       });
@@ -581,37 +687,71 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
           }}
         >
           <Sparkles className="w-4 h-4 text-amber-500 animate-spin" />
-          <span className="text-xs sm:text-sm font-extrabold tracking-tight">
-            Gathering Number{' '}
+          <span className="text-xs sm:text-sm font-extrabold tracking-tight flex items-center gap-1.5">
+            Gathering {inputMode === 'symbols' ? 'Symbol' : 'Number'}{' '}
             <span
-              className="text-base font-mono font-black px-2 py-0.5 rounded-lg text-white shadow-sm"
+              className="inline-flex items-center justify-center font-mono font-black px-2 py-0.5 rounded-lg text-white shadow-sm"
               style={{ backgroundColor: DIGIT_COLORS[currentNum] || 'var(--md-sys-color-primary)' }}
             >
-              {currentNum}
+              <SudokuValueDisplay value={currentNum} inputMode={inputMode} size="sm" />
             </span>{' '}
             of 9
           </span>
         </div>
 
-        {/* Skip Button */}
-        <button
-          type="button"
-          onClick={() => {
-            isCancelledRef.current = true;
-            activeDigitsRef.current = [];
-            onNumberStepRef.current(null, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
-            onCompleteRef.current();
-          }}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold border shadow-md hover:opacity-90 active:scale-95 transition-all"
-          style={{
-            backgroundColor: 'var(--md-sys-color-surface)',
-            borderColor: 'var(--md-sys-color-outline-variant)',
-            color: 'var(--md-sys-color-on-surface)',
-          }}
-        >
-          <span>Skip</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+        <div className="flex items-center gap-2">
+          {onToggleAnimationStyle && (
+            <button
+              type="button"
+              onClick={onToggleAnimationStyle}
+              title={`Toggle between Ribbon Style and ${inputMode === 'symbols' ? 'Symbols Only' : 'Numbers Only'}`}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border shadow-md hover:opacity-90 active:scale-95 transition-all"
+              style={{
+                backgroundColor: 'var(--md-sys-color-surface)',
+                borderColor: 'var(--md-sys-color-outline-variant)',
+                color: 'var(--md-sys-color-on-surface)',
+              }}
+            >
+              {animationStyle === 'numbers_only' ? (
+                <>
+                  <Hash className="w-3.5 h-3.5 text-primary" />
+                  <span className="hidden sm:inline">
+                    {inputMode === 'symbols' ? 'Symbols Only' : 'Numbers Only'}
+                  </span>
+                  <span className="sm:hidden">
+                    {inputMode === 'symbols' ? 'Symbols' : 'Numbers'}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Layers className="w-3.5 h-3.5 text-primary" />
+                  <span className="hidden sm:inline">Show Ribbon</span>
+                  <span className="sm:hidden">Ribbon</span>
+                </>
+              )}
+            </button>
+          )}
+
+          {/* Skip Button */}
+          <button
+            type="button"
+            onClick={() => {
+              isCancelledRef.current = true;
+              activeDigitsRef.current = [];
+              onNumberStepRef.current(null, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+              onCompleteRef.current();
+            }}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold border shadow-md hover:opacity-90 active:scale-95 transition-all"
+            style={{
+              backgroundColor: 'var(--md-sys-color-surface)',
+              borderColor: 'var(--md-sys-color-outline-variant)',
+              color: 'var(--md-sys-color-on-surface)',
+            }}
+          >
+            <span>Skip</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
     </div>
   );

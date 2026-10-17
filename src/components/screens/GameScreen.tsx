@@ -41,6 +41,7 @@ interface GameScreenProps {
   onRestartGame: () => void;
   onStartNewGame?: (difficulty: Difficulty) => void;
   onNavigate: (screen: Screen) => void;
+  onUpdateSettings?: (newSettings: Partial<GameSettings>) => void;
 }
 
 export const GameScreen: React.FC<GameScreenProps> = ({
@@ -51,6 +52,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   onRestartGame,
   onStartNewGame,
   onNavigate,
+  onUpdateSettings,
 }) => {
   const { activePrimary, activeOnPrimary, activeAccentText } = useTheme();
 
@@ -169,21 +171,50 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       newBoard[row][col].value = num;
       newBoard[row][col].notes = [];
 
-      // If autoNotes is on, remove this candidate from peer cells
-      if (settings.autoNotes) {
+      // Automatic Notes Removal:
+      // When a correct number is entered, automatically remove that number from the Notes of
+      // all other cells in the same horizontal row, vertical column, and 3x3 box.
+      const clearedNotes: { row: number; col: number; notes: number[] }[] = [];
+      if (isCorrect) {
+        const peerCoords = new Set<string>();
         for (let i = 0; i < 9; i++) {
-          newBoard[row][i].notes = newBoard[row][i].notes.filter(n => n !== num);
-          newBoard[i][col].notes = newBoard[i][col].notes.filter(n => n !== num);
+          if (i !== col) peerCoords.add(`${row},${i}`);
+          if (i !== row) peerCoords.add(`${i},${col}`);
         }
         const startR = Math.floor(row / 3) * 3;
         const startC = Math.floor(col / 3) * 3;
         for (let r = 0; r < 3; r++) {
           for (let c = 0; c < 3; c++) {
-            newBoard[startR + r][startC + c].notes =
-              newBoard[startR + r][startC + c].notes.filter(n => n !== num);
+            const curR = startR + r;
+            const curC = startC + c;
+            if (curR !== row || curC !== col) {
+              peerCoords.add(`${curR},${curC}`);
+            }
           }
         }
+
+        peerCoords.forEach(coord => {
+          const [rStr, cStr] = coord.split(',');
+          const r = parseInt(rStr, 10);
+          const c = parseInt(cStr, 10);
+          const peer = newBoard[r][c];
+          if (peer.notes && peer.notes.includes(num)) {
+            clearedNotes.push({ row: r, col: c, notes: [...peer.notes] });
+            peer.notes = peer.notes.filter(n => n !== num);
+          }
+        });
       }
+
+      const moveRecord: MoveRecord = {
+        row,
+        col,
+        prevValue: prevVal,
+        newValue: num,
+        prevNotes: [...targetCell.notes],
+        newNotes: [],
+        isNoteMove: false,
+        clearedNotes,
+      };
 
       const solved = isBoardSolved(newBoard, game.solution);
       const nextUnits = checkUnitCompletion(newBoard, game.solution);
@@ -196,18 +227,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           board: newBoard,
           isCompleted: false,
           score: game.score + (isCorrect ? 100 : 0),
-          moveHistory: [
-            ...game.moveHistory,
-            {
-              row,
-              col,
-              prevValue: prevVal,
-              newValue: num,
-              prevNotes: [...targetCell.notes],
-              newNotes: [],
-              isNoteMove: false,
-            },
-          ],
+          moveHistory: [...game.moveHistory, moveRecord],
         };
 
         onUpdateGame(() => boardWithFinalMove);
@@ -228,18 +248,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         board: newBoard,
         isCompleted: false,
         score: game.score + (isCorrect ? 100 : 0),
-        moveHistory: [
-          ...game.moveHistory,
-          {
-            row,
-            col,
-            prevValue: prevVal,
-            newValue: num,
-            prevNotes: [...targetCell.notes],
-            newNotes: [],
-            isNoteMove: false,
-          },
-        ],
+        moveHistory: [...game.moveHistory, moveRecord],
       };
 
       onUpdateGame(() => updatedGame);
@@ -308,6 +317,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       const newBoard = prev.board.map(r => r.map(c => ({ ...c, notes: [...c.notes] })));
       newBoard[lastMove.row][lastMove.col].value = lastMove.prevValue;
       newBoard[lastMove.row][lastMove.col].notes = [...lastMove.prevNotes];
+
+      // Restore any peer notes that were automatically removed by this move
+      if (lastMove.clearedNotes && lastMove.clearedNotes.length > 0) {
+        lastMove.clearedNotes.forEach(item => {
+          newBoard[item.row][item.col].notes = [...item.notes];
+        });
+      }
 
       return {
         ...prev,
@@ -418,9 +434,52 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     playHintSound(settings.soundEnabled);
     triggerHaptic('medium', settings.hapticsEnabled);
 
+    const targetCell = game.board[row][col];
+    const prevVal = targetCell.value;
+    const clearedNotes: { row: number; col: number; notes: number[] }[] = [];
     const newBoard = game.board.map(r => r.map(c => ({ ...c, notes: [...c.notes] })));
     newBoard[row][col].value = val;
     newBoard[row][col].notes = [];
+
+    // Automatic Notes Removal for peers
+    const peerCoords = new Set<string>();
+    for (let i = 0; i < 9; i++) {
+      if (i !== col) peerCoords.add(`${row},${i}`);
+      if (i !== row) peerCoords.add(`${i},${col}`);
+    }
+    const startR = Math.floor(row / 3) * 3;
+    const startC = Math.floor(col / 3) * 3;
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 3; c++) {
+        const curR = startR + r;
+        const curC = startC + c;
+        if (curR !== row || curC !== col) {
+          peerCoords.add(`${curR},${curC}`);
+        }
+      }
+    }
+
+    peerCoords.forEach(coord => {
+      const [rStr, cStr] = coord.split(',');
+      const r = parseInt(rStr, 10);
+      const c = parseInt(cStr, 10);
+      const peer = newBoard[r][c];
+      if (peer.notes && peer.notes.includes(val)) {
+        clearedNotes.push({ row: r, col: c, notes: [...peer.notes] });
+        peer.notes = peer.notes.filter(n => n !== val);
+      }
+    });
+
+    const moveRecord: MoveRecord = {
+      row,
+      col,
+      prevValue: prevVal,
+      newValue: val,
+      prevNotes: [...targetCell.notes],
+      newNotes: [],
+      isNoteMove: false,
+      clearedNotes,
+    };
 
     const solved = isBoardSolved(newBoard, game.solution);
     if (solved) {
@@ -429,6 +488,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         board: newBoard,
         hintsUsed: game.hintsUsed + 1,
         isCompleted: false,
+        moveHistory: [...game.moveHistory, moveRecord],
       };
 
       onUpdateGame(() => boardWithFinalHint);
@@ -449,6 +509,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       board: newBoard,
       hintsUsed: game.hintsUsed + 1,
       isCompleted: false,
+      moveHistory: [...game.moveHistory, moveRecord],
     };
 
     onUpdateGame(() => updatedGame);
@@ -639,6 +700,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         disabled={game.isPaused || game.isCompleted || game.isGameOver}
         celebratingNumber={celebratingNumber}
         completedParadeNumbers={completedParadeNumbers}
+        inputMode={settings.inputMode}
       />
 
       {/* Game Over Modal (Mistakes Limit Reached) */}
@@ -760,6 +822,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         isOpen={isLogicModalOpen}
         onClose={() => setIsLogicModalOpen(false)}
         onApplyStep={handleApplyLogicStep}
+        inputMode={settings.inputMode}
       />
 
       {/* Pause Modal */}
@@ -789,6 +852,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         onComplete={handleNumberParadeComplete}
         soundEnabled={settings.soundEnabled}
         hapticsEnabled={settings.hapticsEnabled}
+        animationStyle={settings.completionAnimationStyle || 'ribbon'}
+        inputMode={settings.inputMode}
+        onToggleAnimationStyle={() => {
+          const nextStyle = settings.completionAnimationStyle === 'numbers_only' ? 'ribbon' : 'numbers_only';
+          onUpdateSettings?.({ completionAnimationStyle: nextStyle });
+        }}
       />
 
       {/* Victory Modal */}
