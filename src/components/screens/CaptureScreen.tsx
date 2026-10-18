@@ -22,6 +22,7 @@ interface CaptureScreenProps {
   onStartCustomGame: (puzzle: number[][], difficulty: Difficulty) => void;
   onNavigate: (screen: Screen) => void;
   inputMode?: SudokuInputMode;
+  customColors?: Record<number, string>;
 }
 
 const SAMPLE_PRESETS: { name: string; difficulty: Difficulty; grid: number[][] }[] = [
@@ -76,6 +77,7 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
   onStartCustomGame,
   onNavigate,
   inputMode = 'numbers',
+  customColors,
 }) => {
   const { isDark } = useTheme();
 
@@ -669,7 +671,14 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
                       : ''
                   }`}
                 >
-                  {val !== 0 ? val : ''}
+                  {val !== 0 ? (
+                    <SudokuValueDisplay
+                      value={val}
+                      inputMode={inputMode}
+                      customColors={customColors}
+                      size="sm"
+                    />
+                  ) : ''}
                 </button>
               );
             })
@@ -686,7 +695,7 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
                 borderColor: 'var(--md-sys-color-outline-variant)',
                 backgroundColor: 'var(--md-sys-color-surface)',
               }}
-              className="py-2.5 rounded-lg border text-xs font-bold text-rose-500 hover:opacity-85 active:scale-95"
+              className="py-2.5 rounded-lg border text-xs font-bold text-rose-500 hover:opacity-85 active:scale-95 flex items-center justify-center"
             >
               Clear
             </button>
@@ -700,9 +709,14 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
                   backgroundColor: 'var(--md-sys-color-surface)',
                   color: 'var(--md-sys-color-on-surface)',
                 }}
-                className="py-2.5 rounded-lg border text-base font-bold font-mono hover:opacity-85 active:scale-95 shadow-xs"
+                className="py-2.5 rounded-lg border text-base font-bold font-mono hover:opacity-85 active:scale-95 shadow-xs flex items-center justify-center"
               >
-                {num}
+                <SudokuValueDisplay
+                  value={num}
+                  inputMode={inputMode}
+                  customColors={customColors}
+                  size="sm"
+                />
               </button>
             ))}
           </div>

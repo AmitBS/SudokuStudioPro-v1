@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { BoardMatrix, CompletionAnimationStyle, SudokuInputMode } from '../../types/sudoku';
 import { playParadeChime, playVictoryFanfare, triggerHaptic } from '../../utils/audio';
-import { drawSymbolOnCanvas, SudokuValueDisplay } from '../../utils/sudokuSymbols';
+import { drawSymbolOnCanvas, drawColorCircleOnCanvas, drawFruitOnCanvas, getSudokuColor, SudokuValueDisplay } from '../../utils/sudokuSymbols';
 import { Sparkles, ArrowRight, Layers, Hash } from 'lucide-react';
 
 interface NumberCelebrationParadeProps {
@@ -14,6 +14,7 @@ interface NumberCelebrationParadeProps {
   animationStyle?: CompletionAnimationStyle;
   onToggleAnimationStyle?: () => void;
   inputMode?: SudokuInputMode;
+  customColors?: Record<number, string>;
 }
 
 interface TrailPoint {
@@ -95,6 +96,7 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
   animationStyle = 'ribbon',
   onToggleAnimationStyle,
   inputMode = 'numbers',
+  customColors,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [currentNum, setCurrentNum] = useState<number>(1);
@@ -120,6 +122,9 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
 
   const inputModeRef = useRef<SudokuInputMode>(inputMode);
   inputModeRef.current = inputMode;
+
+  const customColorsRef = useRef<Record<number, string> | undefined>(customColors);
+  customColorsRef.current = customColors;
 
   const isCancelledRef = useRef<boolean>(false);
   const isRunningRef = useRef<boolean>(false);
@@ -305,7 +310,11 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
               const angle = Math.atan2(prevPt.y - pt.y, prevPt.x - pt.x);
               ctx.rotate(angle);
 
-              if (inputModeRef.current === 'symbols') {
+              if (inputModeRef.current === 'fruits') {
+                drawFruitOnCanvas(ctx, digit.num, 0, 0, fontSize * 1.35);
+              } else if (inputModeRef.current === 'colors') {
+                drawColorCircleOnCanvas(ctx, digit.num, 0, 0, fontSize * 1.3, customColorsRef.current);
+              } else if (inputModeRef.current === 'symbols') {
                 drawSymbolOnCanvas(ctx, digit.num, 0, 0, fontSize * 1.15, '#ffffff');
               } else {
                 ctx.font = `900 ${fontSize}px monospace`;
@@ -344,7 +353,11 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
                 ctx.shadowBlur = 10;
                 ctx.fill();
 
-                if (inputModeRef.current === 'symbols') {
+                if (inputModeRef.current === 'fruits') {
+                  drawFruitOnCanvas(ctx, digit.num, 0, 0, 24);
+                } else if (inputModeRef.current === 'colors') {
+                  drawColorCircleOnCanvas(ctx, digit.num, 0, 0, 22, customColorsRef.current);
+                } else if (inputModeRef.current === 'symbols') {
                   drawSymbolOnCanvas(ctx, digit.num, 0, 0, 18, '#ffffff');
                 } else {
                   ctx.font = 'bold 20px monospace';
@@ -360,7 +373,7 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
           });
         } else {
           // ----------------------------------------------------
-          // ANIMATION STYLE 2: NUMBERS / SYMBOLS ONLY
+          // ANIMATION STYLE 2: NUMBERS / SYMBOLS / COLORS ONLY
           // "Display only the moving numbers along their paths, without ribbon shapes."
           // ----------------------------------------------------
           // Absolutely NO ribbon shapes or strokes drawn! Only distinct moving tiles along the path.
@@ -390,7 +403,11 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
               ctx.shadowBlur = 0;
               ctx.stroke();
 
-              if (inputModeRef.current === 'symbols') {
+              if (inputModeRef.current === 'fruits') {
+                drawFruitOnCanvas(ctx, digit.num, 0, 0, Math.round(badgeSize * 0.72));
+              } else if (inputModeRef.current === 'colors') {
+                drawColorCircleOnCanvas(ctx, digit.num, 0, 0, Math.round(badgeSize * 0.68), customColorsRef.current);
+              } else if (inputModeRef.current === 'symbols') {
                 drawSymbolOnCanvas(ctx, digit.num, 0, 0, Math.round(badgeSize * 0.58), '#ffffff');
               } else {
                 const fontSize = Math.max(11, Math.round(badgeSize * 0.58));
@@ -406,7 +423,7 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
           });
         }
 
-        // 4. Lead Number/Symbol Tile at Head (Active in both styles)
+        // 4. Lead Number/Symbol/Color/Fruit Tile at Head (Active in both styles)
         ctx.save();
         ctx.translate(head.x, head.y);
         ctx.globalAlpha = 1;
@@ -428,7 +445,11 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
         ctx.shadowBlur = 0;
         ctx.stroke();
 
-        if (inputModeRef.current === 'symbols') {
+        if (inputModeRef.current === 'fruits') {
+          drawFruitOnCanvas(ctx, digit.num, 0, 0, 28);
+        } else if (inputModeRef.current === 'colors') {
+          drawColorCircleOnCanvas(ctx, digit.num, 0, 0, 26, customColorsRef.current);
+        } else if (inputModeRef.current === 'symbols') {
           drawSymbolOnCanvas(ctx, digit.num, 0, 0, 22, '#ffffff');
         } else {
           // Bold white numeral
@@ -522,7 +543,9 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
         const destY = targetRect && targetRect.height > 0
           ? targetRect.top + targetRect.height / 2
           : window.innerHeight - 80;
-        const color = DIGIT_COLORS[num] || '#3b82f6';
+        const color = inputModeRef.current === 'colors'
+          ? getSudokuColor(num, customColorsRef.current)
+          : (DIGIT_COLORS[num] || '#3b82f6');
 
         // 3. Initialize 9 flying digits at their exact board cell coordinates
         const digits: ActiveDigit[] = matchingCells.map(({ r, c, rect }) => {
@@ -688,12 +711,17 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
         >
           <Sparkles className="w-4 h-4 text-amber-500 animate-spin" />
           <span className="text-xs sm:text-sm font-extrabold tracking-tight flex items-center gap-1.5">
-            Gathering {inputMode === 'symbols' ? 'Symbol' : 'Number'}{' '}
+            Gathering {inputMode === 'fruits' ? 'Fruit' : inputMode === 'colors' ? 'Color' : inputMode === 'symbols' ? 'Symbol' : 'Number'}{' '}
             <span
               className="inline-flex items-center justify-center font-mono font-black px-2 py-0.5 rounded-lg text-white shadow-sm"
-              style={{ backgroundColor: DIGIT_COLORS[currentNum] || 'var(--md-sys-color-primary)' }}
+              style={{
+                backgroundColor:
+                  inputMode === 'colors'
+                    ? getSudokuColor(currentNum, customColors)
+                    : (DIGIT_COLORS[currentNum] || 'var(--md-sys-color-primary)'),
+              }}
             >
-              <SudokuValueDisplay value={currentNum} inputMode={inputMode} size="sm" />
+              <SudokuValueDisplay value={currentNum} inputMode={inputMode} customColors={customColors} size="sm" />
             </span>{' '}
             of 9
           </span>
@@ -704,7 +732,7 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
             <button
               type="button"
               onClick={onToggleAnimationStyle}
-              title={`Toggle between Ribbon Style and ${inputMode === 'symbols' ? 'Symbols Only' : 'Numbers Only'}`}
+              title={`Toggle between Ribbon Style and ${inputMode === 'fruits' ? 'Fruits Only' : inputMode === 'colors' ? 'Colors Only' : inputMode === 'symbols' ? 'Symbols Only' : 'Numbers Only'}`}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border shadow-md hover:opacity-90 active:scale-95 transition-all"
               style={{
                 backgroundColor: 'var(--md-sys-color-surface)',
@@ -716,10 +744,10 @@ export const NumberCelebrationParade: React.FC<NumberCelebrationParadeProps> = (
                 <>
                   <Hash className="w-3.5 h-3.5 text-primary" />
                   <span className="hidden sm:inline">
-                    {inputMode === 'symbols' ? 'Symbols Only' : 'Numbers Only'}
+                    {inputMode === 'fruits' ? 'Fruits Only' : inputMode === 'colors' ? 'Colors Only' : inputMode === 'symbols' ? 'Symbols Only' : 'Numbers Only'}
                   </span>
                   <span className="sm:hidden">
-                    {inputMode === 'symbols' ? 'Symbols' : 'Numbers'}
+                    {inputMode === 'fruits' ? 'Fruits' : inputMode === 'colors' ? 'Colors' : inputMode === 'symbols' ? 'Symbols' : 'Numbers'}
                   </span>
                 </>
               ) : (

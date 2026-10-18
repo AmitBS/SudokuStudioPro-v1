@@ -198,7 +198,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                 role="gridcell"
                 aria-label={
                   cell.value !== 0
-                    ? `Row ${r + 1}, Column ${c + 1}, ${getSymbolAriaLabel(cell.value, settings.inputMode)}`
+                    ? `Row ${r + 1}, Column ${c + 1}, ${getSymbolAriaLabel(cell.value, settings.inputMode, settings.customColors)}`
                     : `Row ${r + 1}, Column ${c + 1}, Empty`
                 }
                 aria-selected={isSelected}
@@ -322,6 +322,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                     <SudokuValueDisplay
                       value={cell.value}
                       inputMode={settings.inputMode}
+                      customColors={settings.customColors}
                       size="md"
                     />
                   </span>
@@ -352,6 +353,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                           <SudokuValueDisplay
                             value={n}
                             inputMode={settings.inputMode}
+                            customColors={settings.customColors}
                             isNote
                           />
                         </div>
@@ -393,6 +395,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
           cellRect={notesPopupTarget.rect}
           currentNotes={notesPopupTarget.currentNotes}
           inputMode={settings.inputMode}
+          customColors={settings.customColors}
           onSelectNumber={(num) => {
             if (onToggleCellNote) {
               onToggleCellNote(notesPopupTarget.row, notesPopupTarget.col, num);

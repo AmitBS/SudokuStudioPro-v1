@@ -9,6 +9,7 @@ interface CellNotesPopupProps {
   onSelectNumber: (num: number) => void;
   onClose: () => void;
   inputMode?: SudokuInputMode;
+  customColors?: Record<number, string>;
 }
 
 export const CellNotesPopup: React.FC<CellNotesPopupProps> = ({
@@ -17,6 +18,7 @@ export const CellNotesPopup: React.FC<CellNotesPopupProps> = ({
   onSelectNumber,
   onClose,
   inputMode = 'numbers',
+  customColors,
 }) => {
   const { tokens } = useTheme();
   const popupRef = useRef<HTMLDivElement>(null);
@@ -213,7 +215,7 @@ export const CellNotesPopup: React.FC<CellNotesPopupProps> = ({
         <div className="w-full flex-1 grid grid-cols-3 grid-rows-3 bg-neutral-300 dark:bg-neutral-700 gap-[1px]">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => {
             const isNotePresent = currentNotes.includes(num);
-            const labelText = getSymbolAriaLabel(num, inputMode);
+            const labelText = getSymbolAriaLabel(num, inputMode, customColors);
 
             return (
               <button
@@ -235,7 +237,7 @@ export const CellNotesPopup: React.FC<CellNotesPopupProps> = ({
                     : 'font-bold hover:opacity-85'
                 }`}
               >
-                <SudokuValueDisplay value={num} inputMode={inputMode} size="md" />
+                <SudokuValueDisplay value={num} inputMode={inputMode} customColors={customColors} size="md" />
                 {isNotePresent && (
                   <span className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-current opacity-80" />
                 )}

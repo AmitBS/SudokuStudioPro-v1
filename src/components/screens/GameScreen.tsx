@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ActiveGame, CellData, CompletedHighlightCell, Difficulty, GameSettings, LogicStep, Screen } from '../../types/sudoku';
+import { ActiveGame, CellData, CompletedHighlightCell, Difficulty, GameSettings, LogicStep, MoveRecord, Screen } from '../../types/sudoku';
 import { useTheme } from '../../theme/themeContext';
 import { SudokuBoard } from '../sudoku/SudokuBoard';
 import { SudokuControls } from '../sudoku/SudokuControls';
@@ -701,6 +701,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         celebratingNumber={celebratingNumber}
         completedParadeNumbers={completedParadeNumbers}
         inputMode={settings.inputMode}
+        customColors={settings.customColors}
       />
 
       {/* Game Over Modal (Mistakes Limit Reached) */}
@@ -823,6 +824,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         onClose={() => setIsLogicModalOpen(false)}
         onApplyStep={handleApplyLogicStep}
         inputMode={settings.inputMode}
+        customColors={settings.customColors}
       />
 
       {/* Pause Modal */}
@@ -854,6 +856,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         hapticsEnabled={settings.hapticsEnabled}
         animationStyle={settings.completionAnimationStyle || 'ribbon'}
         inputMode={settings.inputMode}
+        customColors={settings.customColors}
         onToggleAnimationStyle={() => {
           const nextStyle = settings.completionAnimationStyle === 'numbers_only' ? 'ribbon' : 'numbers_only';
           onUpdateSettings?.({ completionAnimationStyle: nextStyle });

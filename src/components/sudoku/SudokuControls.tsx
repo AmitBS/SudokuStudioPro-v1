@@ -18,6 +18,7 @@ interface SudokuControlsProps {
   celebratingNumber?: number | null;
   completedParadeNumbers?: number[];
   inputMode?: SudokuInputMode;
+  customColors?: Record<number, string>;
 }
 
 export const SudokuControls: React.FC<SudokuControlsProps> = ({
@@ -34,6 +35,7 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
   celebratingNumber = null,
   completedParadeNumbers = [],
   inputMode = 'numbers',
+  customColors,
 }) => {
   return (
     <div className="w-full max-w-[480px] mx-auto space-y-4">
@@ -152,7 +154,7 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
               key={num}
               id={`numpad-btn-${num}`}
               type="button"
-              aria-label={getSymbolAriaLabel(num, inputMode)}
+              aria-label={getSymbolAriaLabel(num, inputMode, customColors)}
               disabled={(isCompleted && !isCelebrating && !isParadeCompleted) || disabled}
               onClick={() => onNumberClick(num)}
               style={{
@@ -185,7 +187,7 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
                 }}
                 className="text-lg sm:text-xl font-bold font-mono flex items-center justify-center h-6 sm:h-7"
               >
-                <SudokuValueDisplay value={num} inputMode={inputMode} size="md" />
+                <SudokuValueDisplay value={num} inputMode={inputMode} customColors={customColors} size="md" />
               </span>
               <span
                 style={{

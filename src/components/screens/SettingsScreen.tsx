@@ -1,10 +1,200 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { CompletionAnimationStyle, GameSettings, HintsMode, MistakesMode, Screen, SudokuInputMode, ThemeMode } from '../../types/sudoku';
 import { useTheme } from '../../theme/themeContext';
 import { MaterialSwitch } from '../common/MaterialSwitch';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { AccentSwatchPicker } from '../common/AccentSwatchPicker';
-import { ArrowLeft, Monitor, Sun, Moon, Volume2, ShieldCheck, Gamepad2, Palette } from 'lucide-react';
+import { ArrowLeft, Monitor, Sun, Moon, Volume2, ShieldCheck, Gamepad2, Palette, RotateCcw, Pipette, Check } from 'lucide-react';
+import { DEFAULT_CUSTOM_COLORS, DEFAULT_SUDOKU_COLORS, getSudokuColor, getSudokuColorName, SudokuColorCircle, SudokuFruit, getFruitName } from '../../utils/sudokuSymbols';
+
+const PRESET_PALETTE = [
+  '#E53935', // Red
+  '#1E88E5', // Blue
+  '#2E7D32', // Green
+  '#FDD835', // Yellow
+  '#FB8C00', // Orange
+  '#8E24AA', // Purple
+  '#EC407A', // Pink
+  '#00ACC1', // Cyan
+  '#795548', // Brown
+  '#10B981', // Emerald
+  '#6366F1', // Indigo
+  '#F59E0B', // Amber
+  '#14B8A6', // Teal
+  '#8B5CF6', // Violet
+];
+
+interface ColorCustomizerRowProps {
+  num: number;
+  currentHex: string;
+  defaultHex: string;
+  colorName: string;
+  onColorChange: (num: number, hex: string) => void;
+  onResetColor: (num: number) => void;
+}
+
+const ColorCustomizerRow: React.FC<ColorCustomizerRowProps> = ({
+  num,
+  currentHex,
+  defaultHex,
+  colorName,
+  onColorChange,
+  onResetColor,
+}) => {
+  const [hexInput, setHexInput] = useState<string>(currentHex);
+
+  useEffect(() => {
+    setHexInput(currentHex);
+  }, [currentHex]);
+
+  const handleHexChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.toUpperCase();
+    if (!val.startsWith('#') && val.length > 0) {
+      val = '#' + val;
+    }
+    setHexInput(val);
+    if (/^#[0-9A-F]{6}$/i.test(val)) {
+      onColorChange(num, val);
+    }
+  };
+
+  const handleHexBlur = () => {
+    if (/^#[0-9A-F]{6}$/i.test(hexInput)) {
+      onColorChange(num, hexInput);
+    } else {
+      setHexInput(currentHex);
+    }
+  };
+
+  const isCustomized = currentHex.toUpperCase() !== defaultHex.toUpperCase();
+
+  return (
+    <div
+      className="p-3.5 sm:p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors"
+      style={{
+        backgroundColor: 'var(--md-sys-color-surface-container-low)',
+        borderColor: 'var(--md-sys-color-outline-variant)',
+      }}
+    >
+      {/* Left: Value identifier, color name, and solid circle preview */}
+      <div className="flex items-center gap-3.5 min-w-[160px]">
+        {/* Preview of the filled circle with no numbers, letters or symbols inside */}
+        <div
+          role="img"
+          aria-label={`Value ${num} colored circle, currently ${colorName} (${currentHex})`}
+          className="w-7 h-7 sm:w-8 sm:h-8 rounded-full shrink-0 shadow-xs ring-2 ring-black/15 dark:ring-white/20 select-none transition-transform hover:scale-105"
+          style={{ backgroundColor: currentHex }}
+        />
+
+        <div>
+          <div className="flex items-center gap-2">
+            <span
+              className="text-xs font-mono font-extrabold px-1.5 py-0.5 rounded-md"
+              style={{
+                backgroundColor: 'var(--md-sys-color-surface-container-highest)',
+                color: 'var(--md-sys-color-on-surface)',
+              }}
+            >
+              Value {num}
+            </span>
+            <span
+              className="text-sm font-bold"
+              style={{ color: 'var(--md-sys-color-on-surface)' }}
+            >
+              {colorName}
+            </span>
+          </div>
+          <div
+            className="text-xs font-mono font-medium mt-0.5"
+            style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
+          >
+            {currentHex}
+          </div>
+        </div>
+      </div>
+
+      {/* Right: Customization controls (quick palette, native picker, hex text input, reset) */}
+      <div className="flex flex-wrap items-center gap-2.5 sm:justify-end">
+        {/* Quick predefined palette swatches */}
+        <div className="flex items-center gap-1 overflow-x-auto py-1 max-w-[200px] sm:max-w-none">
+          {PRESET_PALETTE.slice(0, 9).map(hex => {
+            const isSelected = hex.toUpperCase() === currentHex.toUpperCase();
+            return (
+              <button
+                key={hex}
+                type="button"
+                onClick={() => onColorChange(num, hex)}
+                aria-label={`Set Value ${num} to ${hex}`}
+                title={hex}
+                style={{ backgroundColor: hex }}
+                className={`w-5 h-5 rounded-full shrink-0 shadow-2xs transition-transform hover:scale-115 flex items-center justify-center ${
+                  isSelected ? 'ring-2 ring-offset-1 ring-primary scale-110' : 'opacity-85 hover:opacity-100'
+                }`}
+              >
+                {isSelected && <Check className="w-3 h-3 text-white drop-shadow-sm stroke-[3]" />}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Native Color Picker swatch button */}
+        <label
+          className="relative flex items-center justify-center w-8 h-8 rounded-lg border cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-xs"
+          style={{
+            backgroundColor: currentHex,
+            borderColor: 'var(--md-sys-color-outline-variant)',
+          }}
+          title="Open Color Wheel Picker"
+        >
+          <Pipette className="w-4 h-4 text-white drop-shadow-md stroke-[2.5]" />
+          <input
+            type="color"
+            value={currentHex}
+            onChange={e => onColorChange(num, e.target.value.toUpperCase())}
+            className="sr-only"
+            aria-label={`Open system color picker for Value ${num}`}
+          />
+        </label>
+
+        {/* Hex Text Input */}
+        <div className="flex items-center">
+          <input
+            type="text"
+            value={hexInput}
+            maxLength={7}
+            onChange={handleHexChange}
+            onBlur={handleHexBlur}
+            aria-label={`Hexadecimal color code for Value ${num}`}
+            className="w-20 px-2 py-1 text-xs font-mono font-bold rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary uppercase text-center"
+            style={{
+              backgroundColor: 'var(--md-sys-color-surface)',
+              borderColor: 'var(--md-sys-color-outline-variant)',
+              color: 'var(--md-sys-color-on-surface)',
+            }}
+          />
+        </div>
+
+        {/* Reset button if customized */}
+        {isCustomized && (
+          <button
+            type="button"
+            onClick={() => onResetColor(num)}
+            title={`Reset Value ${num} to default color (${defaultHex})`}
+            aria-label={`Reset Value ${num} to default`}
+            className="p-1.5 rounded-lg border text-xs font-medium transition-all hover:opacity-85 active:scale-95"
+            style={{
+              backgroundColor: 'var(--md-sys-color-surface)',
+              borderColor: 'var(--md-sys-color-outline-variant)',
+              color: 'var(--md-sys-color-on-surface-variant)',
+            }}
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
 
 interface SettingsScreenProps {
   settings: GameSettings;
@@ -30,6 +220,30 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const handleAccentChange = (accent: typeof accentColor) => {
     setAccentColor(accent);
     onUpdateSettings({ accentColor: accent });
+  };
+
+  const handleUpdateColor = (num: number, hex: string) => {
+    let cleanHex = hex.trim();
+    if (!cleanHex.startsWith('#')) cleanHex = '#' + cleanHex;
+    const updated = {
+      ...DEFAULT_CUSTOM_COLORS,
+      ...(settings.customColors || {}),
+      [num]: cleanHex,
+    };
+    onUpdateSettings({ customColors: updated });
+  };
+
+  const handleResetSingleColor = (num: number) => {
+    const updated = {
+      ...DEFAULT_CUSTOM_COLORS,
+      ...(settings.customColors || {}),
+      [num]: DEFAULT_CUSTOM_COLORS[num] || '#94a3b8',
+    };
+    onUpdateSettings({ customColors: updated });
+  };
+
+  const handleResetDefaultColors = () => {
+    onUpdateSettings({ customColors: { ...DEFAULT_CUSTOM_COLORS } });
   };
 
   return (
@@ -81,31 +295,68 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             borderColor: 'var(--md-sys-color-outline-variant)',
           }}
         >
-          {/* Sudoku Input Mode */}
+          {/* Sudoku Display Mode */}
           <div className="pb-4 space-y-2">
             <div
               className="text-base font-semibold"
               style={{ color: 'var(--md-sys-color-on-surface)' }}
             >
-              Sudoku Input Mode
+              Sudoku Display Mode
             </div>
             <div
               className="text-sm"
               style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
             >
-              Play with classic numbers 1–9 or high-contrast geometric symbols.
+              Choose how Sudoku values are visually represented: classic numbers 1–9, geometric symbols, solid colored circles, or vibrant fruit illustrations.
             </div>
             <div className="pt-2">
               <SegmentedControl<SudokuInputMode>
                 options={[
-                  { value: 'numbers', label: 'Numbers (1–9)' },
-                  { value: 'symbols', label: 'Symbols' },
+                  { value: 'numbers', label: 'Number Mode' },
+                  { value: 'symbols', label: 'Symbol Mode' },
+                  { value: 'colors', label: 'Color Mode' },
+                  { value: 'fruits', label: 'Fruit Mode' },
                 ]}
                 value={settings.inputMode || 'numbers'}
                 onChange={val => onUpdateSettings({ inputMode: val })}
-                ariaLabel="Sudoku Input Mode"
+                ariaLabel="Sudoku Display Mode"
               />
             </div>
+
+            {settings.inputMode === 'fruits' && (
+              <div
+                className="mt-3 p-3 rounded-xl border flex flex-col gap-2 animate-in fade-in duration-200"
+                style={{
+                  backgroundColor: 'var(--md-sys-color-surface-container-low)',
+                  borderColor: 'var(--md-sys-color-outline-variant)',
+                }}
+              >
+                <div className="flex items-center justify-between text-xs font-bold" style={{ color: 'var(--md-sys-color-on-surface)' }}>
+                  <span>Fruit Mode Value Mapping</span>
+                  <span className="text-[11px] font-normal" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>9 Unique Fruits</span>
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-9 gap-1.5 pt-1">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
+                    <div
+                      key={num}
+                      className="flex flex-col items-center justify-center p-1.5 rounded-lg border text-center shadow-2xs"
+                      style={{
+                        backgroundColor: 'var(--md-sys-color-surface)',
+                        borderColor: 'var(--md-sys-color-outline-variant)',
+                      }}
+                    >
+                      <SudokuFruit value={num} size="sm" />
+                      <span className="text-[11px] font-mono font-bold mt-0.5" style={{ color: 'var(--md-sys-color-on-surface)' }}>
+                        {num}
+                      </span>
+                      <span className="text-[9px] truncate max-w-full font-medium" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
+                        {getFruitName(num)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Auto notes */}
@@ -210,7 +461,108 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         </div>
       </section>
 
-      {/* SECTION 2: Appearance */}
+      {/* SECTION 2: Color Mode Settings */}
+      <section className="space-y-4" id="color-mode-settings">
+        <div className="flex items-center justify-between">
+          <div
+            className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider"
+            style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
+          >
+            <Palette className="w-4 h-4 text-primary" />
+            <span>Color Mode Settings</span>
+          </div>
+
+          {/* Reset to Default Colors button */}
+          <button
+            type="button"
+            onClick={handleResetDefaultColors}
+            aria-label="Reset to Default Colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all hover:opacity-85 active:scale-95 shadow-xs"
+            style={{
+              backgroundColor: 'var(--md-sys-color-surface-container-high)',
+              borderColor: 'var(--md-sys-color-outline-variant)',
+              color: 'var(--md-sys-color-on-surface)',
+            }}
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset to Default Colors</span>
+          </button>
+        </div>
+
+        <div
+          className="p-4 sm:p-5 rounded-2xl border shadow-xs space-y-4"
+          style={{
+            backgroundColor: 'var(--md-sys-color-surface)',
+            borderColor: 'var(--md-sys-color-outline-variant)',
+          }}
+        >
+          <div>
+            <div
+              className="text-base font-semibold"
+              style={{ color: 'var(--md-sys-color-on-surface)' }}
+            >
+              Customize Sudoku Value Colors
+            </div>
+            <p
+              className="text-sm mt-0.5"
+              style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
+            >
+              In Color Mode, each Sudoku value is represented as a solid filled circle with no numbers or symbols inside. Customize any of the nine colors below using the color picker, hex codes, or quick swatches.
+            </p>
+          </div>
+
+          {/* 1-9 Palette Overview Strip */}
+          <div
+            className="p-3 rounded-xl border flex items-center justify-between overflow-x-auto gap-2"
+            style={{
+              backgroundColor: 'var(--md-sys-color-surface-container-low)',
+              borderColor: 'var(--md-sys-color-outline-variant)',
+            }}
+          >
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => {
+              const hex = getSudokuColor(num, settings.customColors);
+              return (
+                <div key={num} className="flex flex-col items-center gap-1 min-w-[32px]">
+                  <div
+                    className="w-6 h-6 rounded-full shadow-xs ring-1 ring-black/15 dark:ring-white/20 select-none"
+                    style={{ backgroundColor: hex }}
+                  />
+                  <span
+                    className="text-[10px] font-mono font-bold"
+                    style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
+                  >
+                    {num}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* 9 Value Rows */}
+          <div className="space-y-2.5 pt-1">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => {
+              const currentHex = getSudokuColor(num, settings.customColors);
+              const defaultMeta = DEFAULT_SUDOKU_COLORS[num];
+              const defaultHex = defaultMeta?.defaultHex || DEFAULT_CUSTOM_COLORS[num] || '#94a3b8';
+              const colorName = defaultMeta?.name || `Color ${num}`;
+
+              return (
+                <ColorCustomizerRow
+                  key={num}
+                  num={num}
+                  currentHex={currentHex}
+                  defaultHex={defaultHex}
+                  colorName={colorName}
+                  onColorChange={handleUpdateColor}
+                  onResetColor={handleResetSingleColor}
+                />
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 3: Appearance */}
       <section className="space-y-4">
         <div
           className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider"
@@ -318,7 +670,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         </div>
       </section>
 
-      {/* SECTION 3: Sound & Haptics */}
+      {/* SECTION 4: Sound & Haptics */}
       <section className="space-y-4">
         <div
           className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider"
@@ -353,7 +705,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         </div>
       </section>
 
-      {/* SECTION 4: Contrast & Compliance Verification */}
+      {/* SECTION 5: Contrast & Compliance Verification */}
       <section
         className="p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4"
         style={{

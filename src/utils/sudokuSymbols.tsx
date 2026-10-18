@@ -1,12 +1,67 @@
 import React from 'react';
+import { SudokuInputMode } from '../types/sudoku';
+import { SudokuFruit, getFruitName, getFruitAriaLabel, drawFruitOnCanvas, SUDOKU_FRUITS } from './sudokuFruits';
 
-export type SudokuInputMode = 'numbers' | 'symbols';
+export { SudokuFruit, getFruitName, getFruitAriaLabel, drawFruitOnCanvas, SUDOKU_FRUITS };
 
 export interface SudokuSymbolMeta {
   value: number;
   name: string;
   ariaLabel: string;
   pathData: string;
+}
+
+export interface SudokuColorMeta {
+  value: number;
+  name: string;
+  defaultHex: string;
+}
+
+/**
+ * Default Color Mapping for Sudoku Color Mode:
+ * 1 -> Red     (#E53935)
+ * 2 -> Blue    (#1E88E5)
+ * 3 -> Green   (#2E7D32)
+ * 4 -> Yellow  (#FDD835)
+ * 5 -> Orange  (#FB8C00)
+ * 6 -> Purple  (#8E24AA)
+ * 7 -> Pink    (#EC407A)
+ * 8 -> Cyan    (#00ACC1)
+ * 9 -> Brown   (#795548)
+ */
+export const DEFAULT_SUDOKU_COLORS: Record<number, SudokuColorMeta> = {
+  1: { value: 1, name: 'Red', defaultHex: '#E53935' },
+  2: { value: 2, name: 'Blue', defaultHex: '#1E88E5' },
+  3: { value: 3, name: 'Green', defaultHex: '#2E7D32' },
+  4: { value: 4, name: 'Yellow', defaultHex: '#FDD835' },
+  5: { value: 5, name: 'Orange', defaultHex: '#FB8C00' },
+  6: { value: 6, name: 'Purple', defaultHex: '#8E24AA' },
+  7: { value: 7, name: 'Pink', defaultHex: '#EC407A' },
+  8: { value: 8, name: 'Cyan', defaultHex: '#00ACC1' },
+  9: { value: 9, name: 'Brown', defaultHex: '#795548' },
+};
+
+export const DEFAULT_CUSTOM_COLORS: Record<number, string> = {
+  1: '#E53935',
+  2: '#1E88E5',
+  3: '#2E7D32',
+  4: '#FDD835',
+  5: '#FB8C00',
+  6: '#8E24AA',
+  7: '#EC407A',
+  8: '#00ACC1',
+  9: '#795548',
+};
+
+export function getSudokuColor(num: number, customColors?: Record<number, string>): string {
+  if (customColors && customColors[num]) {
+    return customColors[num];
+  }
+  return DEFAULT_SUDOKU_COLORS[num]?.defaultHex || '#94a3b8';
+}
+
+export function getSudokuColorName(num: number): string {
+  return DEFAULT_SUDOKU_COLORS[num]?.name || `Color ${num}`;
 }
 
 /**
@@ -113,12 +168,39 @@ export function drawSymbolOnCanvas(
   if (path) {
     ctx.fill(path);
   } else {
-    // Fallback if Path2D is somehow unavailable
     ctx.font = `bold ${Math.round(size * 0.7)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(String(num), 12, 12);
   }
+  ctx.restore();
+}
+
+/**
+ * Draw a solid filled circle directly onto an HTML5 Canvas 2D context.
+ * Used for hardware-accelerated animations in Color Mode.
+ */
+export function drawColorCircleOnCanvas(
+  ctx: CanvasRenderingContext2D,
+  num: number,
+  x: number,
+  y: number,
+  size: number,
+  customColors?: Record<number, string>
+): void {
+  const color = getSudokuColor(num, customColors);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 8;
+  ctx.fill();
+
+  // Subtle luminous rim for high contrast in light & dark canvas backgrounds
+  ctx.lineWidth = Math.max(1.2, size * 0.08);
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+  ctx.stroke();
   ctx.restore();
 }
 
@@ -130,12 +212,25 @@ export function getSymbolName(num: number): string {
   return SUDOKU_SYMBOLS[num]?.name || String(num);
 }
 
-export function getSymbolAriaLabel(num: number, inputMode?: SudokuInputMode): string {
+export function getSudokuValueAriaLabel(
+  num: number,
+  inputMode?: SudokuInputMode,
+  customColors?: Record<number, string>
+): string {
+  if (inputMode === 'fruits') {
+    return getFruitAriaLabel(num);
+  }
+  if (inputMode === 'colors') {
+    const colorName = getSudokuColorName(num);
+    return `Value ${num}, ${colorName.toLowerCase()} circle`;
+  }
   if (inputMode === 'symbols') {
     return SUDOKU_SYMBOLS[num]?.ariaLabel || `Number ${num}`;
   }
   return `Number ${num}`;
 }
+
+export const getSymbolAriaLabel = getSudokuValueAriaLabel;
 
 export interface SudokuSymbolProps {
   value: number;
@@ -146,7 +241,7 @@ export interface SudokuSymbolProps {
 }
 
 /**
- * Reusable vector SVG symbol component.
+ * Reusable vector SVG symbol component for Symbol Mode.
  */
 export const SudokuSymbol: React.FC<SudokuSymbolProps> = ({
   value,
@@ -180,16 +275,73 @@ export const SudokuSymbol: React.FC<SudokuSymbolProps> = ({
   );
 };
 
+export interface SudokuColorCircleProps {
+  value: number;
+  className?: string;
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | number;
+  customColors?: Record<number, string>;
+  title?: string;
+  isNote?: boolean;
+}
+
+/**
+ * Reusable solid filled circle component for Color Mode.
+ * Centered within cells, scaled appropriately, with no numbers, letters or symbols inside.
+ */
+export const SudokuColorCircle: React.FC<SudokuColorCircleProps> = ({
+  value,
+  className = '',
+  size = 'md',
+  customColors,
+  title,
+  isNote = false,
+}) => {
+  const color = getSudokuColor(value, customColors);
+  const colorName = getSudokuColorName(value);
+  const ariaLabel = title || `Value ${value}, ${colorName.toLowerCase()} circle`;
+
+  let sizeClasses = 'w-5 h-5 sm:w-6 sm:h-6';
+  if (isNote || size === 'xs') {
+    sizeClasses = 'w-2 h-2 sm:w-2.5 sm:h-2.5';
+  } else if (size === 'sm') {
+    sizeClasses = 'w-3.5 h-3.5 sm:w-4 sm:h-4';
+  } else if (size === 'md') {
+    sizeClasses = 'w-5 h-5 sm:w-6 sm:h-6';
+  } else if (size === 'lg') {
+    sizeClasses = 'w-6 h-6 sm:w-7 sm:h-7';
+  } else if (size === 'xl') {
+    sizeClasses = 'w-7 h-7 sm:w-8 sm:h-8';
+  }
+
+  const style: React.CSSProperties = {
+    backgroundColor: color,
+  };
+  if (typeof size === 'number') {
+    style.width = `${size}px`;
+    style.height = `${size}px`;
+  }
+
+  return (
+    <span
+      role="img"
+      aria-label={ariaLabel}
+      style={style}
+      className={`rounded-full inline-block shrink-0 shadow-xs ring-1 ring-black/15 dark:ring-white/25 select-none ${typeof size === 'number' ? '' : sizeClasses} ${className}`}
+    />
+  );
+};
+
 export interface SudokuValueDisplayProps {
   value: number;
   inputMode?: SudokuInputMode;
   className?: string;
   isNote?: boolean;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  customColors?: Record<number, string>;
 }
 
 /**
- * Unified value display: renders either standard number (1-9) or vector symbol based on inputMode.
+ * Unified value display: renders either standard number (1-9), vector symbol, or colored circle based on inputMode.
  */
 export const SudokuValueDisplay: React.FC<SudokuValueDisplayProps> = ({
   value,
@@ -197,8 +349,34 @@ export const SudokuValueDisplay: React.FC<SudokuValueDisplayProps> = ({
   className = '',
   isNote = false,
   size = 'md',
+  customColors,
 }) => {
   if (!value || value < 1 || value > 9) return null;
+
+  if (inputMode === 'fruits') {
+    return (
+      <span className={`inline-flex items-center justify-center ${className}`}>
+        <SudokuFruit
+          value={value}
+          size={isNote ? 'xs' : size}
+          isNote={isNote}
+        />
+      </span>
+    );
+  }
+
+  if (inputMode === 'colors') {
+    return (
+      <span className={`inline-flex items-center justify-center ${className}`}>
+        <SudokuColorCircle
+          value={value}
+          size={isNote ? 'xs' : size}
+          customColors={customColors}
+          isNote={isNote}
+        />
+      </span>
+    );
+  }
 
   if (inputMode === 'symbols') {
     let symbolClass = 'w-5 h-5';

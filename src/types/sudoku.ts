@@ -32,7 +32,7 @@ export interface CompletedHighlightCell {
   ringColor: string;
 }
 
-export type SudokuInputMode = 'numbers' | 'symbols';
+export type SudokuInputMode = 'numbers' | 'symbols' | 'colors' | 'fruits';
 
 export interface MoveRecord {
   row: number;
@@ -72,6 +72,7 @@ export interface GameSettings {
   hapticsEnabled: boolean;
   completionAnimationStyle: CompletionAnimationStyle;
   inputMode: SudokuInputMode;
+  customColors?: Record<number, string>;
 }
 
 export interface ActiveGame {

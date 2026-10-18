@@ -25,6 +25,18 @@ import {
   calculateCandidates,
 } from './utils/sudokuEngine';
 
+const DEFAULT_CUSTOM_COLORS: Record<number, string> = {
+  1: '#E53935',
+  2: '#1E88E5',
+  3: '#2E7D32',
+  4: '#FDD835',
+  5: '#FB8C00',
+  6: '#8E24AA',
+  7: '#EC407A',
+  8: '#00ACC1',
+  9: '#795548',
+};
+
 const DEFAULT_SETTINGS: GameSettings = {
   autoNotes: false,
   highlightSameNumbers: true,
@@ -39,6 +51,7 @@ const DEFAULT_SETTINGS: GameSettings = {
   hapticsEnabled: true,
   completionAnimationStyle: 'ribbon',
   inputMode: 'numbers',
+  customColors: DEFAULT_CUSTOM_COLORS,
 };
 
 const DEFAULT_STATS: PlayerStats = {
@@ -68,7 +81,17 @@ function MainApp() {
   const [settings, setSettings] = useState<GameSettings>(() => {
     try {
       const saved = localStorage.getItem('sudoku_settings');
-      if (saved) return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ...DEFAULT_SETTINGS,
+          ...parsed,
+          customColors: {
+            ...DEFAULT_CUSTOM_COLORS,
+            ...(parsed.customColors || {}),
+          },
+        };
+      }
     } catch {
       // Ignore
     }
@@ -425,6 +448,8 @@ function MainApp() {
           <CaptureScreen
             onStartCustomGame={handleStartCustomGame}
             onNavigate={setCurrentScreen}
+            inputMode={settings.inputMode}
+            customColors={settings.customColors}
           />
         )}
 
