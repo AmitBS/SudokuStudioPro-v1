@@ -388,7 +388,7 @@ function MainApp() {
 
   return (
     <div
-      className="min-h-screen flex flex-col transition-colors"
+      className="min-h-screen flex flex-col transition-colors overflow-x-hidden w-full max-w-full"
       style={{
         backgroundColor: 'var(--md-sys-color-background)',
         color: 'var(--md-sys-color-on-background)',
@@ -403,7 +403,7 @@ function MainApp() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col w-full max-w-full overflow-x-hidden">
         {currentScreen === 'home' && (
           <HomeScreen
             activeGame={activeGame}

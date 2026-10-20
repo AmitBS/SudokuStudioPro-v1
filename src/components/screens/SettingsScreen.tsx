@@ -77,7 +77,7 @@ const ColorCustomizerRow: React.FC<ColorCustomizerRowProps> = ({
       }}
     >
       {/* Left: Value identifier, color name, and solid circle preview */}
-      <div className="flex items-center gap-3.5 min-w-[160px]">
+      <div className="flex items-center gap-3 min-w-0">
         {/* Preview of the filled circle with no numbers, letters or symbols inside */}
         <div
           role="img"
@@ -86,7 +86,7 @@ const ColorCustomizerRow: React.FC<ColorCustomizerRowProps> = ({
           style={{ backgroundColor: currentHex }}
         />
 
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span
               className="text-xs font-mono font-extrabold px-1.5 py-0.5 rounded-md"
@@ -98,7 +98,7 @@ const ColorCustomizerRow: React.FC<ColorCustomizerRowProps> = ({
               Value {num}
             </span>
             <span
-              className="text-sm font-bold"
+              className="text-sm font-bold truncate"
               style={{ color: 'var(--md-sys-color-on-surface)' }}
             >
               {colorName}
@@ -116,7 +116,7 @@ const ColorCustomizerRow: React.FC<ColorCustomizerRowProps> = ({
       {/* Right: Customization controls (quick palette, native picker, hex text input, reset) */}
       <div className="flex flex-wrap items-center gap-2.5 sm:justify-end">
         {/* Quick predefined palette swatches */}
-        <div className="flex items-center gap-1 overflow-x-auto py-1 max-w-[200px] sm:max-w-none">
+        <div className="flex items-center gap-1 overflow-x-auto py-1 max-w-full sm:max-w-none">
           {PRESET_PALETTE.slice(0, 9).map(hex => {
             const isSelected = hex.toUpperCase() === currentHex.toUpperCase();
             return (
@@ -247,7 +247,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-4 py-6 sm:py-8 space-y-8 animate-in fade-in duration-150">
+    <div className="w-full max-w-2xl mx-auto px-4 py-6 sm:py-8 space-y-8 animate-in fade-in duration-150 max-w-full overflow-x-hidden">
       {/* Screen Header */}
       <div
         className="flex items-center gap-3 pb-3 border-b"
@@ -312,10 +312,32 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <div className="pt-2">
               <SegmentedControl<SudokuInputMode>
                 options={[
-                  { value: 'numbers', label: 'Number Mode' },
-                  { value: 'symbols', label: 'Symbol Mode' },
-                  { value: 'colors', label: 'Color Mode' },
-                  { value: 'fruits', label: 'Fruit Mode' },
+                  {
+                    value: 'numbers',
+                    label: 'Number Mode',
+                    shortLabel: 'Numbers',
+                    icon: <span className="font-mono font-black text-[11px] leading-none">123</span>,
+                  },
+                  {
+                    value: 'symbols',
+                    label: 'Symbol Mode',
+                    shortLabel: 'Symbols',
+                    icon: <span className="text-xs leading-none">★</span>,
+                  },
+                  {
+                    value: 'colors',
+                    label: 'Color Mode',
+                    shortLabel: 'Colors',
+                    icon: (
+                      <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-amber-400 via-rose-500 to-indigo-500 inline-block shrink-0" />
+                    ),
+                  },
+                  {
+                    value: 'fruits',
+                    label: 'Fruit Mode',
+                    shortLabel: 'Fruits',
+                    icon: <span className="text-xs leading-none">🥝</span>,
+                  },
                 ]}
                 value={settings.inputMode || 'numbers'}
                 onChange={val => onUpdateSettings({ inputMode: val })}
@@ -333,7 +355,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               >
                 <div className="flex items-center justify-between text-xs font-bold" style={{ color: 'var(--md-sys-color-on-surface)' }}>
                   <span>Fruit Mode Value Mapping</span>
-                  <span className="text-[11px] font-normal" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>9 Unique Fruits</span>
+                  <span className="text-[11px] font-normal" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>9 Unique Fruits & Colors</span>
                 </div>
                 <div className="grid grid-cols-3 sm:grid-cols-9 gap-1.5 pt-1">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
@@ -513,7 +535,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
           {/* 1-9 Palette Overview Strip */}
           <div
-            className="p-3 rounded-xl border flex items-center justify-between overflow-x-auto gap-2"
+            className="p-3 rounded-xl border grid grid-cols-9 gap-1 sm:gap-2 max-w-full"
             style={{
               backgroundColor: 'var(--md-sys-color-surface-container-low)',
               borderColor: 'var(--md-sys-color-outline-variant)',
@@ -522,9 +544,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => {
               const hex = getSudokuColor(num, settings.customColors);
               return (
-                <div key={num} className="flex flex-col items-center gap-1 min-w-[32px]">
+                <div key={num} className="flex flex-col items-center gap-1 min-w-0">
                   <div
-                    className="w-6 h-6 rounded-full shadow-xs ring-1 ring-black/15 dark:ring-white/20 select-none"
+                    className="w-5 h-5 sm:w-6 sm:h-6 rounded-full shadow-xs ring-1 ring-black/15 dark:ring-white/20 select-none"
                     style={{ backgroundColor: hex }}
                   />
                   <span

@@ -9,80 +9,80 @@ export interface SudokuFruitMeta {
 }
 
 /**
- * Mandatory fixed mapping for Fruit Mode:
- * 1 -> Mango      (Ripe mango)
- * 2 -> Banana     (Yellow banana)
- * 3 -> Apple      (Red apple)
- * 4 -> Orange     (Orange fruit)
- * 5 -> Strawberry (Red strawberry)
- * 6 -> Grapes     (Purple grape bunch)
- * 7 -> Watermelon (Watermelon slice)
- * 8 -> Pineapple  (Pineapple)
- * 9 -> Cherry     (Pair of cherries)
+ * 9 Unique Fruits with 9 Distinct Colors across the visual spectrum:
+ * 1 -> Mango        (Golden Amber   - #F59E0B) [Mandatory]
+ * 2 -> Banana       (Bright Yellow  - #FACC15) [Mandatory]
+ * 3 -> Apple        (Crimson Red    - #EF4444) [Mandatory]
+ * 4 -> Orange       (Vivid Orange   - #EA580C)
+ * 5 -> Kiwi         (Lime Green     - #22C55E)
+ * 6 -> Grapes       (Royal Purple   - #9333EA)
+ * 7 -> Blueberry    (Sapphire Blue  - #2563EB)
+ * 8 -> Dragonfruit  (Hot Pink       - #EC4899)
+ * 9 -> Coconut      (Earthy Brown   - #78350F)
  */
 export const SUDOKU_FRUITS: Record<number, SudokuFruitMeta> = {
   1: {
     value: 1,
     name: 'Mango',
-    ariaLabel: 'Value 1, ripe mango',
+    ariaLabel: 'Value 1, golden mango',
     primaryColor: '#F59E0B',
-    description: 'Golden ripe mango with fresh green leaf',
+    description: 'Golden tropical mango with fresh green leaf',
   },
   2: {
     value: 2,
     name: 'Banana',
     ariaLabel: 'Value 2, yellow banana',
     primaryColor: '#FACC15',
-    description: 'Curved yellow banana',
+    description: 'Curved bright yellow banana',
   },
   3: {
     value: 3,
     name: 'Apple',
     ariaLabel: 'Value 3, red apple',
     primaryColor: '#EF4444',
-    description: 'Crisp red apple with stem and leaf',
+    description: 'Glossy crimson red apple with stem and leaf',
   },
   4: {
     value: 4,
     name: 'Orange',
-    ariaLabel: 'Value 4, orange fruit',
-    primaryColor: '#FB923C',
-    description: 'Sunny orange citrus fruit with leaf',
+    ariaLabel: 'Value 4, citrus orange',
+    primaryColor: '#EA580C',
+    description: 'Sunny citrus orange with textured peel and leaf',
   },
   5: {
     value: 5,
-    name: 'Strawberry',
-    ariaLabel: 'Value 5, red strawberry',
-    primaryColor: '#F43F5E',
-    description: 'Seed-studded red strawberry with leafy calyx',
+    name: 'Kiwi',
+    ariaLabel: 'Value 5, green kiwi',
+    primaryColor: '#22C55E',
+    description: 'Electric lime-green sliced kiwi with seed circle',
   },
   6: {
     value: 6,
     name: 'Grapes',
-    ariaLabel: 'Value 6, purple grape bunch',
+    ariaLabel: 'Value 6, purple grapes',
     primaryColor: '#9333EA',
-    description: 'Cluster of glossy purple grapes',
+    description: 'Cluster of glossy royal purple grapes',
   },
   7: {
     value: 7,
-    name: 'Watermelon',
-    ariaLabel: 'Value 7, watermelon slice',
-    primaryColor: '#10B981',
-    description: 'Juicy watermelon slice with green rind and seeds',
+    name: 'Blueberry',
+    ariaLabel: 'Value 7, blue blueberry',
+    primaryColor: '#2563EB',
+    description: 'Sapphire blue berry with star calyx crown',
   },
   8: {
     value: 8,
-    name: 'Pineapple',
-    ariaLabel: 'Value 8, pineapple',
-    primaryColor: '#EAB308',
-    description: 'Golden textured pineapple with spiky crown',
+    name: 'Dragonfruit',
+    ariaLabel: 'Value 8, pink dragonfruit',
+    primaryColor: '#EC4899',
+    description: 'Vibrant hot-pink pitaya with green-tipped scales',
   },
   9: {
     value: 9,
-    name: 'Cherry',
-    ariaLabel: 'Value 9, pair of cherries',
-    primaryColor: '#DC2626',
-    description: 'Twin pair of ruby red cherries on stems',
+    name: 'Coconut',
+    ariaLabel: 'Value 9, brown coconut',
+    primaryColor: '#78350F',
+    description: 'Tropical brown coconut shell with white meat',
   },
 };
 
@@ -99,57 +99,60 @@ export function getFruitAriaLabel(num: number): string {
 }
 
 /**
- * Raw SVG string templates for instant offline Canvas drawing and 60fps animations.
+ * Raw SVG string templates for instant offline Canvas drawing and rendering.
+ * All SVGs are 32x32 viewBox, centered, transparent background, and high contrast.
  */
 export const FRUIT_SVG_STRINGS: Record<number, string> = {
-  // 1: Mango
+  // 1: Mango (Golden Amber)
   1: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
     <defs>
-      <linearGradient id="m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <linearGradient id="m-grad" x1="10%" y1="0%" x2="90%" y2="100%">
         <stop offset="0%" stop-color="#FDE047"/>
         <stop offset="45%" stop-color="#F59E0B"/>
-        <stop offset="100%" stop-color="#EA580C"/>
+        <stop offset="100%" stop-color="#D97706"/>
       </linearGradient>
     </defs>
     <!-- Leaf -->
-    <path d="M16 6 C19 3 24 3 26 6 C24 8 20 8 16 6 Z" fill="#22C55E"/>
-    <path d="M17 5.5 C20 4.5 23 5 25 6" stroke="#15803D" stroke-width="0.75" fill="none"/>
+    <path d="M16 6 C19.5 2.5 24.5 3 26.5 6 C24 8.5 19.5 8.5 16 6 Z" fill="#22C55E"/>
+    <path d="M17 5.5 C20 4.5 23 5 25.5 6" stroke="#15803D" stroke-width="0.75" fill="none"/>
     <!-- Stem -->
-    <path d="M16 7 C15.5 5 15 3.5 13.5 2" stroke="#78350F" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+    <path d="M16 7 C15.5 4.5 14.5 3 13 2" stroke="#78350F" stroke-width="1.6" stroke-linecap="round" fill="none"/>
     <!-- Mango Body -->
     <path d="M16.5 6.5 C22.5 6.5 27 11.5 26 19 C25 25 19.5 28.5 14.5 28.5 C9 28.5 5.5 23.5 6.5 16 C7.5 9 11.5 6.5 16.5 6.5 Z" fill="url(#m-grad)"/>
-    <!-- Blush Highlight -->
-    <path d="M10 13 C9.5 17 11 22 13 24" stroke="#FEF08A" stroke-width="1.8" stroke-linecap="round" opacity="0.6" fill="none"/>
+    <!-- Rosy Blush on curve -->
+    <path d="M21 13 C24 16 23.5 22 20 25" stroke="#FB7185" stroke-width="2.5" stroke-linecap="round" opacity="0.45" fill="none"/>
+    <!-- Luminous highlight -->
+    <path d="M10 13 C9.5 17 11 22 13 24" stroke="#FEF08A" stroke-width="1.8" stroke-linecap="round" opacity="0.7" fill="none"/>
   </svg>`,
 
-  // 2: Banana
+  // 2: Banana (Bright Yellow)
   2: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
     <defs>
       <linearGradient id="b-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#FEF08A"/>
-        <stop offset="40%" stop-color="#FACC15"/>
-        <stop offset="100%" stop-color="#EAB308"/>
+        <stop offset="0%" stop-color="#FEF9C3"/>
+        <stop offset="35%" stop-color="#FACC15"/>
+        <stop offset="100%" stop-color="#CA8A04"/>
       </linearGradient>
     </defs>
     <!-- Banana Body -->
     <path d="M6 22.5 C8 25.5 14 26.5 21 21.5 C26 17.5 27.5 11 26.5 6.5 C25.5 7 24 8 22 10 C17.5 14.5 11 18.5 6 22.5 Z" fill="url(#b-grad)"/>
     <!-- Ridge Line -->
-    <path d="M6 22.5 C12 21 18 16.5 23 10" stroke="#CA8A04" stroke-width="1.2" fill="none" opacity="0.8"/>
+    <path d="M6 22.5 C12 21 18 16.5 23 10" stroke="#A16207" stroke-width="1.2" fill="none" opacity="0.8"/>
     <!-- Inner Highlight -->
-    <path d="M10 22 C15 19 20 15 24 9" stroke="#FEF9C3" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.7"/>
+    <path d="M10 22 C15 19 20 15 24 9" stroke="#FEF9C3" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.8"/>
     <!-- Stem Tip -->
     <path d="M26.5 6.5 L28 4.5" stroke="#713F12" stroke-width="2" stroke-linecap="round"/>
     <!-- Bottom Tip -->
-    <circle cx="5.8" cy="22.8" r="1.2" fill="#713F12"/>
+    <circle cx="5.8" cy="22.8" r="1.3" fill="#713F12"/>
   </svg>`,
 
-  // 3: Apple
+  // 3: Apple (Crimson Red)
   3: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
     <defs>
       <linearGradient id="a-grad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="#F87171"/>
         <stop offset="40%" stop-color="#EF4444"/>
-        <stop offset="100%" stop-color="#B91C1C"/>
+        <stop offset="100%" stop-color="#991B1B"/>
       </linearGradient>
     </defs>
     <!-- Leaf -->
@@ -160,74 +163,75 @@ export const FRUIT_SVG_STRINGS: Record<number, string> = {
     <path d="M16 8.5 C12 4.5 5 7.5 5 15.5 C5 23.5 11 28.5 16 27.5 C21 28.5 27 23.5 27 15.5 C27 7.5 20 4.5 16 8.5 Z" fill="url(#a-grad)"/>
     <!-- Glossy Highlight -->
     <path d="M9 11 C7.5 14 7.5 19 9 22" stroke="#FCA5A5" stroke-width="2" stroke-linecap="round" opacity="0.6" fill="none"/>
-    <circle cx="10" cy="12" r="1.5" fill="#FFFFFF" opacity="0.75"/>
+    <circle cx="10" cy="12" r="1.5" fill="#FFFFFF" opacity="0.8"/>
   </svg>`,
 
-  // 4: Orange
+  // 4: Orange (Vivid Citrus Orange)
   4: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
     <defs>
-      <linearGradient id="o-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <linearGradient id="o-grad" x1="10%" y1="0%" x2="90%" y2="100%">
         <stop offset="0%" stop-color="#FDBA74"/>
         <stop offset="45%" stop-color="#FB923C"/>
-        <stop offset="100%" stop-color="#EA580C"/>
+        <stop offset="100%" stop-color="#C2410C"/>
       </linearGradient>
     </defs>
     <!-- Leaf -->
-    <path d="M16 5 C19.5 2.5 24 3.5 25.5 6 C22.5 7.5 18.5 7 16 5 Z" fill="#22C55E"/>
-    <path d="M16 6 L15 3.5" stroke="#78350F" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M16 5.5 C19.5 3 24 4 25.5 6.5 C22.5 8 18.5 7.5 16 5.5 Z" fill="#22C55E"/>
+    <path d="M16 6.5 L15 3.5" stroke="#78350F" stroke-width="1.6" stroke-linecap="round"/>
     <!-- Orange Sphere -->
-    <circle cx="16" cy="17" r="11" fill="url(#o-grad)"/>
-    <!-- Dimple Texture Dots -->
-    <circle cx="12" cy="13" r="0.7" fill="#C2410C" opacity="0.6"/>
-    <circle cx="19" cy="14" r="0.7" fill="#C2410C" opacity="0.6"/>
-    <circle cx="15" cy="20" r="0.7" fill="#C2410C" opacity="0.6"/>
-    <circle cx="21" cy="21" r="0.7" fill="#C2410C" opacity="0.6"/>
-    <circle cx="10" cy="18" r="0.7" fill="#C2410C" opacity="0.6"/>
-    <!-- Glossy Sheen -->
-    <path d="M10 13 C12 9.5 17 9 20 11" stroke="#FFEDD5" stroke-width="1.8" stroke-linecap="round" opacity="0.6" fill="none"/>
+    <circle cx="16" cy="17.5" r="11" fill="url(#o-grad)"/>
+    <!-- Dimple Texture Pores -->
+    <circle cx="12" cy="14" r="0.8" fill="#9A3412" opacity="0.5"/>
+    <circle cx="19" cy="15" r="0.8" fill="#9A3412" opacity="0.5"/>
+    <circle cx="15" cy="21" r="0.8" fill="#9A3412" opacity="0.5"/>
+    <circle cx="21" cy="22" r="0.8" fill="#9A3412" opacity="0.5"/>
+    <circle cx="10" cy="19" r="0.8" fill="#9A3412" opacity="0.5"/>
+    <!-- Glossy Curved Sheen -->
+    <path d="M10 13.5 C12 10 17 9.5 20 11.5" stroke="#FFEDD5" stroke-width="1.8" stroke-linecap="round" opacity="0.65" fill="none"/>
   </svg>`,
 
-  // 5: Strawberry
+  // 5: Kiwi (Electric Lime Green Slice)
   5: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
     <defs>
-      <linearGradient id="sb-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#FB7185"/>
-        <stop offset="45%" stop-color="#F43F5E"/>
-        <stop offset="100%" stop-color="#BE123C"/>
-      </linearGradient>
+      <radialGradient id="kw-flesh" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#FEF9C3"/>
+        <stop offset="25%" stop-color="#86EFAC"/>
+        <stop offset="65%" stop-color="#22C55E"/>
+        <stop offset="100%" stop-color="#15803D"/>
+      </radialGradient>
     </defs>
-    <!-- Berry Body -->
-    <path d="M16 28.5 C13 28.5 6 22 6 13.5 C6 8.5 11 7 16 8 C21 7 26 8.5 26 13.5 C26 22 19 28.5 16 28.5 Z" fill="url(#sb-grad)"/>
-    <!-- Yellow Seeds -->
-    <circle cx="12" cy="12" r="0.8" fill="#FEF08A"/>
-    <circle cx="16" cy="11.5" r="0.8" fill="#FEF08A"/>
-    <circle cx="20" cy="12" r="0.8" fill="#FEF08A"/>
-    <circle cx="9.5" cy="16" r="0.8" fill="#FEF08A"/>
-    <circle cx="14" cy="16" r="0.8" fill="#FEF08A"/>
-    <circle cx="18" cy="16" r="0.8" fill="#FEF08A"/>
-    <circle cx="22.5" cy="16" r="0.8" fill="#FEF08A"/>
-    <circle cx="12" cy="20.5" r="0.8" fill="#FEF08A"/>
-    <circle cx="16" cy="20" r="0.8" fill="#FEF08A"/>
-    <circle cx="20" cy="20.5" r="0.8" fill="#FEF08A"/>
-    <circle cx="14" cy="24.5" r="0.8" fill="#FEF08A"/>
-    <circle cx="18" cy="24.5" r="0.8" fill="#FEF08A"/>
-    <!-- Leafy Calyx Crown -->
-    <path d="M16 5 L16 3" stroke="#15803D" stroke-width="1.8" stroke-linecap="round"/>
-    <path d="M16 8 L11 5 C13 8 13 9 13 10 C14 8 15 8 16 8 C17 8 18 8 19 10 C19 9 19 8 21 5 Z" fill="#22C55E"/>
-    <path d="M16 8 C14 10 9 10 7 8 C10 11 13 10 16 8 Z" fill="#16A34A"/>
-    <path d="M16 8 C18 10 23 10 25 8 C22 11 19 10 16 8 Z" fill="#16A34A"/>
+    <!-- Fuzzy Brown Outer Skin -->
+    <circle cx="16" cy="16" r="12.5" fill="#78350F"/>
+    <circle cx="16" cy="16" r="12" fill="#854D0E"/>
+    <!-- Pale Inner Skin Ring -->
+    <circle cx="16" cy="16" r="11.5" fill="#BBF7D0"/>
+    <!-- Vibrant Lime Green Flesh -->
+    <circle cx="16" cy="16" r="10.8" fill="url(#kw-flesh)"/>
+    <!-- Radial Starburst Core Lines -->
+    <path d="M16 11 L16 21 M11 16 L21 16 M12.5 12.5 L19.5 19.5 M19.5 12.5 L12.5 19.5" stroke="#DCFCE7" stroke-width="0.8" opacity="0.75"/>
+    <!-- Creamy Core Center -->
+    <ellipse cx="16" cy="16" rx="3.2" ry="3.2" fill="#FEF9C3"/>
+    <!-- Ring of Tiny Black Seeds -->
+    <circle cx="16" cy="11.2" r="0.8" fill="#0F172A"/>
+    <circle cx="16" cy="20.8" r="0.8" fill="#0F172A"/>
+    <circle cx="11.2" cy="16" r="0.8" fill="#0F172A"/>
+    <circle cx="20.8" cy="16" r="0.8" fill="#0F172A"/>
+    <circle cx="12.6" cy="12.6" r="0.8" fill="#0F172A"/>
+    <circle cx="19.4" cy="12.6" r="0.8" fill="#0F172A"/>
+    <circle cx="12.6" cy="19.4" r="0.8" fill="#0F172A"/>
+    <circle cx="19.4" cy="19.4" r="0.8" fill="#0F172A"/>
   </svg>`,
 
-  // 6: Grapes
+  // 6: Grapes (Deep Royal Purple Cluster)
   6: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
     <defs>
       <linearGradient id="g-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#C084FC"/>
-        <stop offset="50%" stop-color="#9333EA"/>
-        <stop offset="100%" stop-color="#6B21A8"/>
+        <stop offset="0%" stop-color="#D8B4FE"/>
+        <stop offset="45%" stop-color="#9333EA"/>
+        <stop offset="100%" stop-color="#581C87"/>
       </linearGradient>
     </defs>
-    <!-- Vine & Leaf -->
+    <!-- Vine Stem & Leaf -->
     <path d="M16 7 C16 4.5 17 3 19 2.5" stroke="#78350F" stroke-width="1.6" stroke-linecap="round" fill="none"/>
     <path d="M16 6 C13 4 9 4.5 8 7 C11 8 14 7.5 16 6 Z" fill="#22C55E"/>
     <!-- Grape Berries Cluster -->
@@ -250,79 +254,95 @@ export const FRUIT_SVG_STRINGS: Record<number, string> = {
     <!-- Bottom Berry -->
     <circle cx="16" cy="27.5" r="3" fill="url(#g-grad)"/>
     <!-- Highlights -->
-    <circle cx="12.5" cy="13" r="0.9" fill="#E9D5FF" opacity="0.8"/>
-    <circle cx="17.5" cy="13" r="0.9" fill="#E9D5FF" opacity="0.8"/>
-    <circle cx="15" cy="18" r="0.9" fill="#E9D5FF" opacity="0.8"/>
+    <circle cx="12.5" cy="13" r="0.9" fill="#F3E8FF" opacity="0.8"/>
+    <circle cx="17.5" cy="13" r="0.9" fill="#F3E8FF" opacity="0.8"/>
+    <circle cx="15" cy="18" r="0.9" fill="#F3E8FF" opacity="0.8"/>
   </svg>`,
 
-  // 7: Watermelon
+  // 7: Blueberry (Sapphire Royal Blue Berry)
   7: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-    <!-- Outer Dark Green Rind -->
-    <path d="M4 11 C8 24.5 24 24.5 28 11 C25 21 7 21 4 11 Z" fill="#15803D"/>
-    <!-- Inner White/Pale Pith -->
-    <path d="M5 11 C8.5 22.5 23.5 22.5 27 11 C24.5 19.5 7.5 19.5 5 11 Z" fill="#DCFCE7"/>
-    <!-- Red Juicy Flesh -->
-    <path d="M6 11 C9 20.5 23 20.5 26 11 Z" fill="#EF4444"/>
-    <!-- Seeds -->
-    <ellipse cx="11" cy="13" rx="0.8" ry="1.4" transform="rotate(-18 11 13)" fill="#18181B"/>
-    <ellipse cx="16" cy="14" rx="0.8" ry="1.4" fill="#18181B"/>
-    <ellipse cx="21" cy="13" rx="0.8" ry="1.4" transform="rotate(18 21 13)" fill="#18181B"/>
-    <ellipse cx="13.5" cy="16.5" rx="0.8" ry="1.4" transform="rotate(-10 13.5 16.5)" fill="#18181B"/>
-    <ellipse cx="18.5" cy="16.5" rx="0.8" ry="1.4" transform="rotate(10 18.5 16.5)" fill="#18181B"/>
+    <defs>
+      <radialGradient id="bb-grad" cx="40%" cy="35%" r="65%">
+        <stop offset="0%" stop-color="#93C5FD"/>
+        <stop offset="35%" stop-color="#3B82F6"/>
+        <stop offset="75%" stop-color="#1D4ED8"/>
+        <stop offset="100%" stop-color="#1E3A8A"/>
+      </radialGradient>
+    </defs>
+    <!-- Background mini leaf -->
+    <path d="M19 6 C23 4 27 5.5 28 8.5 C25 9.5 21 8.5 19 6 Z" fill="#22C55E"/>
+    <!-- Plump Blue Berry -->
+    <circle cx="16" cy="18" r="11" fill="url(#bb-grad)"/>
+    <!-- Star-shaped Calyx Crown Rim -->
+    <path d="M12 9.5 L14 11.5 L16 8.5 L18 11.5 L20 9.5 L19 13 L21 14.5 L18 15 L16 16.5 L14 15 L11 14.5 L13 13 Z" fill="#1E3A8A"/>
+    <ellipse cx="16" cy="12.5" rx="3.5" ry="2" fill="#0F172A"/>
+    <ellipse cx="16" cy="12.5" rx="2" ry="1.2" fill="#1D4ED8"/>
+    <!-- Luminous Soft Crescent Sheen -->
+    <path d="M9.5 15 C8.5 18 9 22 11.5 25" stroke="#BFDBFE" stroke-width="2" stroke-linecap="round" opacity="0.75" fill="none"/>
+    <circle cx="10" cy="15" r="1.3" fill="#FFFFFF" opacity="0.8"/>
   </svg>`,
 
-  // 8: Pineapple
+  // 8: Dragonfruit (Radiant Hot Pink / Magenta)
   8: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
     <defs>
-      <linearGradient id="pa-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#FDE047"/>
-        <stop offset="50%" stop-color="#F59E0B"/>
-        <stop offset="100%" stop-color="#B45309"/>
+      <linearGradient id="df-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#F472B6"/>
+        <stop offset="45%" stop-color="#EC4899"/>
+        <stop offset="100%" stop-color="#9D174D"/>
       </linearGradient>
     </defs>
-    <!-- Spiky Crown Leaves -->
-    <path d="M16 12 L16 3 C15 6 13 8 11 9 C13 7 14 5 13 2 C15 5 16 8 16 12 Z" fill="#15803D"/>
-    <path d="M16 12 L16 3 C17 6 19 8 21 9 C19 7 18 5 19 2 C17 5 16 8 16 12 Z" fill="#16A34A"/>
-    <path d="M16 12 C14 9 9 9 7 8 C10 11 13 12 16 12 Z" fill="#22C55E"/>
-    <path d="M16 12 C18 9 23 9 25 8 C22 11 19 12 16 12 Z" fill="#22C55E"/>
-    <!-- Oval Pineapple Body -->
-    <rect x="8.5" y="11.5" width="15" height="17" rx="7.5" fill="url(#pa-grad)"/>
-    <!-- Cross-hatch Diamond Texture Lines -->
-    <path d="M10 15 L22 25" stroke="#78350F" stroke-width="0.9" opacity="0.6"/>
-    <path d="M9 20 L19 28" stroke="#78350F" stroke-width="0.9" opacity="0.6"/>
-    <path d="M13 12 L23 20" stroke="#78350F" stroke-width="0.9" opacity="0.6"/>
-    <path d="M22 15 L10 25" stroke="#78350F" stroke-width="0.9" opacity="0.6"/>
-    <path d="M23 20 L13 28" stroke="#78350F" stroke-width="0.9" opacity="0.6"/>
-    <path d="M19 12 L9 20" stroke="#78350F" stroke-width="0.9" opacity="0.6"/>
-    <!-- Center scale dots -->
-    <circle cx="16" cy="18" r="0.75" fill="#FEF08A"/>
-    <circle cx="12" cy="20" r="0.75" fill="#FEF08A"/>
-    <circle cx="20" cy="20" r="0.75" fill="#FEF08A"/>
-    <circle cx="16" cy="23" r="0.75" fill="#FEF08A"/>
+    <!-- Top Crown Leaf Scales -->
+    <path d="M16 3 L16 9 C14 6 12 5 10 4 C13 7 14 9 14 11 Z" fill="#22C55E"/>
+    <path d="M16 3 L16 9 C18 6 20 5 22 4 C19 7 18 9 18 11 Z" fill="#22C55E"/>
+    <!-- Hot Pink Body -->
+    <path d="M16 29 C9 29 6 22 6 15 C6 9 11 8 16 8 C21 8 26 9 26 15 C26 22 23 29 16 29 Z" fill="url(#df-grad)"/>
+    <!-- Curved Bract Scales with Green Tips -->
+    <!-- Left scales -->
+    <path d="M6 14 C3 12 5 9 8 11 C6.5 13 6 14 6 14 Z" fill="#4ADE80"/>
+    <path d="M7 19 C4 18 5 15 9 17 C7.5 18.5 7 19 7 19 Z" fill="#4ADE80"/>
+    <path d="M10 25 C7 25 8 22 12 23 C10.5 24.5 10 25 10 25 Z" fill="#4ADE80"/>
+    <!-- Right scales -->
+    <path d="M26 14 C29 12 27 9 24 11 C25.5 13 26 14 26 14 Z" fill="#4ADE80"/>
+    <path d="M25 19 C28 18 27 15 23 17 C24.5 18.5 25 19 25 19 Z" fill="#4ADE80"/>
+    <path d="M22 25 C25 25 24 22 20 23 C21.5 24.5 22 25 22 25 Z" fill="#4ADE80"/>
+    <!-- Center scale accents -->
+    <path d="M16 13 C14 16 14 18 16 19 C18 18 18 16 16 13 Z" fill="#F472B6"/>
+    <path d="M16 13 L16 15" stroke="#22C55E" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M16 21 C14 23 14 25 16 26 C18 25 18 23 16 21 Z" fill="#F472B6"/>
+    <!-- Highlight -->
+    <path d="M10 13 C9 16 10 21 12 24" stroke="#FCE7F3" stroke-width="1.5" stroke-linecap="round" opacity="0.6" fill="none"/>
   </svg>`,
 
-  // 9: Cherry
+  // 9: Coconut (Earthy Brown Shell with White Meat)
   9: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
     <defs>
-      <linearGradient id="ch-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#F87171"/>
-        <stop offset="40%" stop-color="#DC2626"/>
-        <stop offset="100%" stop-color="#881337"/>
-      </linearGradient>
+      <radialGradient id="cc-husk" cx="40%" cy="40%" r="60%">
+        <stop offset="0%" stop-color="#92400E"/>
+        <stop offset="60%" stop-color="#78350F"/>
+        <stop offset="100%" stop-color="#451A03"/>
+      </radialGradient>
+      <radialGradient id="cc-inner" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#E0F2FE"/>
+        <stop offset="50%" stop-color="#F8FAFC"/>
+        <stop offset="100%" stop-color="#E2E8F0"/>
+      </radialGradient>
     </defs>
-    <!-- Joined Leaf -->
-    <path d="M17 3.5 C20.5 1 25 2.5 26.5 5.5 C23 7 19 6 17 3.5 Z" fill="#22C55E"/>
-    <!-- Arched Stems -->
-    <path d="M10 20 C10 11.5 14 5.5 17 3.5" stroke="#15803D" stroke-width="1.6" stroke-linecap="round" fill="none"/>
-    <path d="M22 19 C21 11 18 5.5 17 3.5" stroke="#15803D" stroke-width="1.6" stroke-linecap="round" fill="none"/>
-    <!-- Left Cherry -->
-    <circle cx="10" cy="22" r="6" fill="url(#ch-grad)"/>
-    <circle cx="8" cy="19.5" r="1.3" fill="#FFFFFF" opacity="0.75"/>
-    <path d="M7 23 C7.5 25 9.5 26.5 11.5 26.5" stroke="#FECDD3" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.5"/>
-    <!-- Right Cherry -->
-    <circle cx="22" cy="21" r="6" fill="url(#ch-grad)"/>
-    <circle cx="20" cy="18.5" r="1.3" fill="#FFFFFF" opacity="0.75"/>
-    <path d="M19 22 C19.5 24 21.5 25.5 23.5 25.5" stroke="#FECDD3" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.5"/>
+    <!-- Tropical Palm Leaf in Background -->
+    <path d="M20 5 C25 3 29 4 30 7 C27 8 23 7 20 5 Z" fill="#22C55E"/>
+    <!-- Outer Brown Textured Coconut Husk -->
+    <circle cx="16" cy="17" r="12" fill="url(#cc-husk)"/>
+    <!-- Husk Fiber Texture Strands -->
+    <path d="M6 13 C5 15 5 19 7 21" stroke="#451A03" stroke-width="1" stroke-linecap="round" fill="none"/>
+    <path d="M26 13 C27 15 27 19 25 21" stroke="#451A03" stroke-width="1" stroke-linecap="round" fill="none"/>
+    <path d="M13 28 C15 29 17 29 19 28" stroke="#451A03" stroke-width="1" stroke-linecap="round" fill="none"/>
+    <!-- Pristine White Coconut Meat Rim -->
+    <circle cx="16" cy="17" r="9.5" fill="#FFFFFF"/>
+    <!-- Shaded inner meat border -->
+    <circle cx="16" cy="17" r="9.5" fill="none" stroke="#CBD5E1" stroke-width="1"/>
+    <!-- Center Coconut Water Chamber -->
+    <circle cx="16" cy="17" r="6.5" fill="url(#cc-inner)"/>
+    <!-- Subtle shine on white meat -->
+    <path d="M10 14 C11 11 15 9.5 18 10.5" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.9" fill="none"/>
   </svg>`,
 };
 
