@@ -59,8 +59,8 @@ function canPlaySound(priority: SoundPriority, minIntervalMs = 40): boolean {
   return true;
 }
 
-// 1. CELL CLICK SOUND (Subtle, warm wooden click ~25ms)
-export function playCellSelectSound(enabled = true): void {
+// 1. SATISFYING CLICK SOUND (Subtle, warm acoustic wooden click ~25ms)
+export function playClickSound(enabled = true): void {
   if (!enabled) return;
   if (!canPlaySound('CELL_SELECT', 50)) return;
 
@@ -98,8 +98,12 @@ export function playCellSelectSound(enabled = true): void {
   }
 }
 
-// 2. NUMBER ENTRY SOUND (Warm Vibraphone / Rhodes bell confirmation ~80ms)
-export function playNumberEntrySound(enabled = true): void {
+// Aliases for board cell selection & UI clicks
+export const playCellSelectSound = playClickSound;
+export const playTapSound = playClickSound;
+
+// 2. SATISFYING SUCCESS SOUND (Warm Vibraphone / Rhodes bell harmonic confirmation ~85ms)
+export function playSuccessSound(enabled = true): void {
   if (!enabled) return;
   if (!canPlaySound('NUMBER_ENTRY', 40)) return;
 
@@ -142,6 +146,10 @@ export function playNumberEntrySound(enabled = true): void {
     // Ignore
   }
 }
+
+// Aliases for number placements
+export const playNumberEntrySound = playSuccessSound;
+export const playPlaceNumberSound = playSuccessSound;
 
 // 3. NOTE / PENCIL MARK SOUND (Light, crisp, gentle paper-tick ~35ms)
 export function playNoteEntrySound(enabled = true, isRemoval = false): void {
@@ -214,9 +222,7 @@ export function playHintSound(enabled = true): void {
   }
 }
 
-// Aliases for seamless compatibility
-export const playTapSound = playCellSelectSound;
-export const playPlaceNumberSound = playNumberEntrySound;
+// Additional aliases for seamless compatibility
 export const playNoteSound = playNoteEntrySound;
 export const playVictoryFanfare = playCelebrationFanfare;
 
