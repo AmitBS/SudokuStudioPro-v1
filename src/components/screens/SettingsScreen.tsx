@@ -355,20 +355,20 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               >
                 <div className="flex items-center justify-between text-xs font-bold" style={{ color: 'var(--md-sys-color-on-surface)' }}>
                   <span>Fruit Mode Value Mapping</span>
-                  <span className="text-[11px] font-normal" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>9 Unique Fruits & Colors</span>
+                  <span className="text-[11px] font-normal" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>9 Realistic 3D Fruits</span>
                 </div>
                 <div className="grid grid-cols-3 sm:grid-cols-9 gap-1.5 pt-1">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
                     <div
                       key={num}
-                      className="flex flex-col items-center justify-center p-1.5 rounded-lg border text-center shadow-2xs"
+                      className="flex flex-col items-center justify-center p-2 rounded-xl border text-center shadow-2xs transition-transform hover:scale-105"
                       style={{
                         backgroundColor: 'var(--md-sys-color-surface)',
                         borderColor: 'var(--md-sys-color-outline-variant)',
                       }}
                     >
-                      <SudokuFruit value={num} size="sm" />
-                      <span className="text-[11px] font-mono font-bold mt-0.5" style={{ color: 'var(--md-sys-color-on-surface)' }}>
+                      <SudokuFruit value={num} size="md" />
+                      <span className="text-[11px] font-mono font-bold mt-1" style={{ color: 'var(--md-sys-color-on-surface)' }}>
                         {num}
                       </span>
                       <span className="text-[9px] truncate max-w-full font-medium" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
