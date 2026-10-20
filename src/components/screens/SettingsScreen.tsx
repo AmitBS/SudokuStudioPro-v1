@@ -5,6 +5,7 @@ import { MaterialSwitch } from '../common/MaterialSwitch';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { AccentSwatchPicker } from '../common/AccentSwatchPicker';
 import { ArrowLeft, Monitor, Sun, Moon, Volume2, ShieldCheck, Gamepad2, Palette, RotateCcw, Pipette, Check } from 'lucide-react';
+import { playSuccessSound, playClickSound } from '../../utils/audio';
 import {
   DEFAULT_CUSTOM_COLORS,
   DEFAULT_SUDOKU_COLORS,
@@ -759,7 +760,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             label="Sound effects"
             description="Play crisp synthesized audio chimes on number placement, erase, and puzzle completion."
             checked={settings.soundEnabled}
-            onChange={val => onUpdateSettings({ soundEnabled: val })}
+            onChange={val => {
+              onUpdateSettings({ soundEnabled: val });
+              if (val) playSuccessSound(true);
+            }}
           />
 
           <MaterialSwitch

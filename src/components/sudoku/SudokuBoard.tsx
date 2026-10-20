@@ -1,7 +1,7 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { BoardMatrix, CellData, CompletedHighlightCell, GameSettings, LogicStep } from '../../types/sudoku';
 import { useTheme } from '../../theme/themeContext';
-import { triggerHaptic } from '../../utils/audio';
+import { triggerHaptic, playSuccessSound } from '../../utils/audio';
 import { CellNotesPopup } from './CellNotesPopup';
 import { SudokuValueDisplay, getSymbolAriaLabel } from '../../utils/sudokuSymbols';
 
@@ -220,6 +220,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                       longPressTriggeredRef.current = true;
                       setProgressCell(null);
                       triggerHaptic('success');
+                      playSuccessSound(settings.soundEnabled);
                       // Reaffirm selection of this exact cell before opening popup
                       onSelectCell(r, c);
                       const rect = targetBtn.getBoundingClientRect();
