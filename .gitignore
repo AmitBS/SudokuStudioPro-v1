@@ -20,5 +20,5 @@ local.properties
 .vscode/
 *.iml
 
-# Generated Android Web Assets (compiled frontend bundles)
-/android-native/app/src/main/assets/assets/
+# Generated Android Web Assets (entire assets directory is built & synced automatically)
+/android-native/app/src/main/assets/
