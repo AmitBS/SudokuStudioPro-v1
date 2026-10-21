@@ -1,4 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
+import bananaImage from '../assets/fruits/banana.png';
+import orangeImage from '../assets/fruits/orange.png';
+import kiwiImage from '../assets/fruits/kiwi.png';
+import coconutImage from '../assets/fruits/coconut.png';
 
 export interface SudokuFruitMeta {
   value: number;
@@ -35,8 +39,8 @@ export const SUDOKU_FRUITS: Record<number, SudokuFruitMeta> = {
     name: 'Banana',
     ariaLabel: 'Value 2, 3D yellow banana bunch',
     primaryColor: '#FACC15',
-    imageSrc: '/assets/fruits/banana.png',
-    fallbackImageSrc: '/assets/aistudio/image_9e10724d.png',
+    imageSrc: bananaImage,
+    fallbackImageSrc: '/assets/fruits/banana.png',
     description: 'Realistic 3D cluster of ripe yellow bananas with brown tips',
   },
   3: {
@@ -51,8 +55,8 @@ export const SUDOKU_FRUITS: Record<number, SudokuFruitMeta> = {
     name: 'Orange',
     ariaLabel: 'Value 4, 3D sliced citrus orange',
     primaryColor: '#EA580C',
-    imageSrc: '/assets/fruits/orange.png',
-    fallbackImageSrc: '/assets/aistudio/image_2e3b6e29.png',
+    imageSrc: orangeImage,
+    fallbackImageSrc: '/assets/fruits/orange.png',
     description: 'Realistic 3D juicy sliced citrus orange half showing pulp and peel',
   },
   5: {
@@ -60,8 +64,8 @@ export const SUDOKU_FRUITS: Record<number, SudokuFruitMeta> = {
     name: 'Kiwi',
     ariaLabel: 'Value 5, 3D green kiwi',
     primaryColor: '#22C55E',
-    imageSrc: '/assets/fruits/kiwi.png',
-    fallbackImageSrc: '/assets/aistudio/image_6140a19d.png',
+    imageSrc: kiwiImage,
+    fallbackImageSrc: '/assets/fruits/kiwi.png',
     description: 'Realistic 3D sliced lime-green kiwi half with seed ring, creamy core, and fuzzy rind',
   },
   6: {
@@ -90,8 +94,8 @@ export const SUDOKU_FRUITS: Record<number, SudokuFruitMeta> = {
     name: 'Coconut',
     ariaLabel: 'Value 9, 3D brown coconut',
     primaryColor: '#78350F',
-    imageSrc: '/assets/fruits/coconut.png',
-    fallbackImageSrc: '/assets/aistudio/image_4fe5ad3a.png',
+    imageSrc: coconutImage,
+    fallbackImageSrc: '/assets/fruits/coconut.png',
     description: 'Realistic 3D fibrous brown coconut half with succulent white meat',
   },
 };
@@ -158,7 +162,7 @@ export const FRUIT_SVG_STRINGS: Record<number, string> = {
 
   // 2: Banana (Bright Yellow) - Realistic 3D Banana Bunch
   2: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="100%" height="100%">
-    <image href="/assets/fruits/banana.png" x="1" y="1" width="30" height="30" preserveAspectRatio="xMidYMid meet" />
+    <image href="${bananaImage}" x="1" y="1" width="30" height="30" preserveAspectRatio="xMidYMid meet" />
   </svg>`,
 
   // 3: Apple (Crimson Red) - Realistic 3D Lacquered Apple
@@ -209,12 +213,12 @@ export const FRUIT_SVG_STRINGS: Record<number, string> = {
 
   // 4: Orange (Vivid Citrus Orange) - Realistic 3D Sliced Orange
   4: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="100%" height="100%">
-    <image href="/assets/fruits/orange.png" x="1" y="1" width="30" height="30" preserveAspectRatio="xMidYMid meet" />
+    <image href="${orangeImage}" x="1" y="1" width="30" height="30" preserveAspectRatio="xMidYMid meet" />
   </svg>`,
 
   // 5: Kiwi (Lime Green) - Realistic 3D Sliced Kiwi
   5: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="100%" height="100%">
-    <image href="/assets/fruits/kiwi.png" x="1" y="1" width="30" height="30" preserveAspectRatio="xMidYMid meet" />
+    <image href="${kiwiImage}" x="1" y="1" width="30" height="30" preserveAspectRatio="xMidYMid meet" />
   </svg>`,
 
   // 6: Grapes (Royal Purple) - Realistic 3D Cluster of Grapes
@@ -369,7 +373,7 @@ export const FRUIT_SVG_STRINGS: Record<number, string> = {
 
   // 9: Coconut (Earthy Brown) - Realistic 3D Coconut Bowl Half
   9: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="100%" height="100%">
-    <image href="/assets/fruits/coconut.png" x="1" y="1" width="30" height="30" preserveAspectRatio="xMidYMid meet" />
+    <image href="${coconutImage}" x="1" y="1" width="30" height="30" preserveAspectRatio="xMidYMid meet" />
   </svg>`,
 };
 
@@ -464,7 +468,7 @@ export const SudokuFruit: React.FC<SudokuFruitProps> = ({
 
   const ariaLabel = title || meta.ariaLabel;
 
-  // If the fruit has a direct 3D image asset (e.g. Kiwi or Coconut)
+  // If the fruit has a direct 3D image asset (Banana, Orange, Kiwi, Coconut)
   if (meta.imageSrc) {
     return (
       <span
@@ -481,7 +485,7 @@ export const SudokuFruit: React.FC<SudokuFruitProps> = ({
           loading="eager"
           draggable={false}
           onError={e => {
-            if (meta.fallbackImageSrc && e.currentTarget.src !== window.location.origin + meta.fallbackImageSrc) {
+            if (meta.fallbackImageSrc && !e.currentTarget.src.endsWith(meta.fallbackImageSrc)) {
               e.currentTarget.src = meta.fallbackImageSrc;
             }
           }}
