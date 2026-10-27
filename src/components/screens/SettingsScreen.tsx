@@ -347,7 +347,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     value: 'fruits',
                     label: 'Fruit Mode',
                     shortLabel: 'Fruits',
-                    icon: <span className="text-xs leading-none">🥝</span>,
+                    icon: (
+                      <span className="inline-flex items-center justify-center w-3.5 h-3.5">
+                        <SudokuFruit value={5} size="xs" />
+                      </span>
+                    ),
                   },
                 ]}
                 value={settings.inputMode || 'numbers'}
@@ -523,6 +527,15 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             description="Require a confirmation prompt before abandoning an active puzzle."
             checked={settings.confirmNewGame}
             onChange={val => onUpdateSettings({ confirmNewGame: val })}
+          />
+
+          {/* Puzzle Progress Bar */}
+          <MaterialSwitch
+            id="setting-puzzle-progress-bar"
+            label="Puzzle progress bar"
+            description="Display a live visual completion bar at the top of the game screen."
+            checked={settings.showProgressBar ?? true}
+            onChange={val => onUpdateSettings({ showProgressBar: val })}
           />
         </div>
       </section>

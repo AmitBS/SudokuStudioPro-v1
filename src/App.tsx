@@ -52,6 +52,7 @@ const DEFAULT_SETTINGS: GameSettings = {
   completionAnimationStyle: 'ribbon',
   inputMode: 'numbers',
   customColors: DEFAULT_CUSTOM_COLORS,
+  showProgressBar: true,
 };
 
 const DEFAULT_STATS: PlayerStats = {

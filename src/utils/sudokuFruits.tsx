@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import bananaImage from '../assets/fruits/banana.png';
-import orangeImage from '../assets/fruits/orange.png';
-import kiwiImage from '../assets/fruits/kiwi.png';
-import coconutImage from '../assets/fruits/coconut.png';
+import {
+  BANANA_DATA_URI,
+  ORANGE_DATA_URI,
+  KIWI_DATA_URI,
+  COCONUT_DATA_URI,
+} from './fruitDataUris';
 
 export interface SudokuFruitMeta {
   value: number;
@@ -17,9 +19,9 @@ export interface SudokuFruitMeta {
 /**
  * 9 Unique Fruits with 9 Distinct Colors in Realistic, High-Quality 3D:
  * 1 -> Mango        (Golden Yellow  - #FBBF24) [Mandatory - No leaf, clearly different from Orange]
- * 2 -> Banana       (Bright Yellow  - #FACC15) [Mandatory]
+ * 2 -> Banana       (Bright Yellow  - #FACC15) [Mandatory - Self-contained 3D asset]
  * 3 -> Apple        (Crimson Red    - #EF4444) [Mandatory]
- * 4 -> Orange       (Vivid Orange   - #EA580C) [Textured pores, calyx, green leaf]
+ * 4 -> Orange       (Vivid Orange   - #EA580C) [Textured pores, calyx, sliced citrus]
  * 5 -> Kiwi         (Lime Green     - #22C55E) [User attached 3D sliced kiwi image]
  * 6 -> Grapes       (Royal Purple   - #9333EA)
  * 7 -> Blueberry    (Sapphire Blue  - #2563EB)
@@ -39,8 +41,7 @@ export const SUDOKU_FRUITS: Record<number, SudokuFruitMeta> = {
     name: 'Banana',
     ariaLabel: 'Value 2, 3D yellow banana bunch',
     primaryColor: '#FACC15',
-    imageSrc: bananaImage,
-    fallbackImageSrc: '/assets/fruits/banana.png',
+    imageSrc: BANANA_DATA_URI,
     description: 'Realistic 3D cluster of ripe yellow bananas with brown tips',
   },
   3: {
@@ -55,8 +56,7 @@ export const SUDOKU_FRUITS: Record<number, SudokuFruitMeta> = {
     name: 'Orange',
     ariaLabel: 'Value 4, 3D sliced citrus orange',
     primaryColor: '#EA580C',
-    imageSrc: orangeImage,
-    fallbackImageSrc: '/assets/fruits/orange.png',
+    imageSrc: ORANGE_DATA_URI,
     description: 'Realistic 3D juicy sliced citrus orange half showing pulp and peel',
   },
   5: {
@@ -64,8 +64,7 @@ export const SUDOKU_FRUITS: Record<number, SudokuFruitMeta> = {
     name: 'Kiwi',
     ariaLabel: 'Value 5, 3D green kiwi',
     primaryColor: '#22C55E',
-    imageSrc: kiwiImage,
-    fallbackImageSrc: '/assets/fruits/kiwi.png',
+    imageSrc: KIWI_DATA_URI,
     description: 'Realistic 3D sliced lime-green kiwi half with seed ring, creamy core, and fuzzy rind',
   },
   6: {
@@ -94,8 +93,7 @@ export const SUDOKU_FRUITS: Record<number, SudokuFruitMeta> = {
     name: 'Coconut',
     ariaLabel: 'Value 9, 3D brown coconut',
     primaryColor: '#78350F',
-    imageSrc: coconutImage,
-    fallbackImageSrc: '/assets/fruits/coconut.png',
+    imageSrc: COCONUT_DATA_URI,
     description: 'Realistic 3D fibrous brown coconut half with succulent white meat',
   },
 };
@@ -162,7 +160,7 @@ export const FRUIT_SVG_STRINGS: Record<number, string> = {
 
   // 2: Banana (Bright Yellow) - Realistic 3D Banana Bunch
   2: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="100%" height="100%">
-    <image href="${bananaImage}" x="1" y="1" width="30" height="30" preserveAspectRatio="xMidYMid meet" />
+    <image href="${BANANA_DATA_URI}" x="1" y="1" width="30" height="30" preserveAspectRatio="xMidYMid meet" />
   </svg>`,
 
   // 3: Apple (Crimson Red) - Realistic 3D Lacquered Apple
@@ -213,12 +211,12 @@ export const FRUIT_SVG_STRINGS: Record<number, string> = {
 
   // 4: Orange (Vivid Citrus Orange) - Realistic 3D Sliced Orange
   4: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="100%" height="100%">
-    <image href="${orangeImage}" x="1" y="1" width="30" height="30" preserveAspectRatio="xMidYMid meet" />
+    <image href="${ORANGE_DATA_URI}" x="1" y="1" width="30" height="30" preserveAspectRatio="xMidYMid meet" />
   </svg>`,
 
   // 5: Kiwi (Lime Green) - Realistic 3D Sliced Kiwi
   5: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="100%" height="100%">
-    <image href="${kiwiImage}" x="1" y="1" width="30" height="30" preserveAspectRatio="xMidYMid meet" />
+    <image href="${KIWI_DATA_URI}" x="1" y="1" width="30" height="30" preserveAspectRatio="xMidYMid meet" />
   </svg>`,
 
   // 6: Grapes (Royal Purple) - Realistic 3D Cluster of Grapes
@@ -373,7 +371,7 @@ export const FRUIT_SVG_STRINGS: Record<number, string> = {
 
   // 9: Coconut (Earthy Brown) - Realistic 3D Coconut Bowl Half
   9: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="100%" height="100%">
-    <image href="${coconutImage}" x="1" y="1" width="30" height="30" preserveAspectRatio="xMidYMid meet" />
+    <image href="${COCONUT_DATA_URI}" x="1" y="1" width="30" height="30" preserveAspectRatio="xMidYMid meet" />
   </svg>`,
 };
 
@@ -444,6 +442,7 @@ export const SudokuFruit: React.FC<SudokuFruitProps> = ({
   title,
   isNote = false,
 }) => {
+  const [imgFailed, setImgFailed] = useState<boolean>(false);
   const meta = SUDOKU_FRUITS[value];
   if (!meta) return null;
 
@@ -469,7 +468,7 @@ export const SudokuFruit: React.FC<SudokuFruitProps> = ({
   const ariaLabel = title || meta.ariaLabel;
 
   // If the fruit has a direct 3D image asset (Banana, Orange, Kiwi, Coconut)
-  if (meta.imageSrc) {
+  if (meta.imageSrc && !imgFailed) {
     return (
       <span
         role="img"
@@ -480,14 +479,14 @@ export const SudokuFruit: React.FC<SudokuFruitProps> = ({
       >
         <img
           src={meta.imageSrc}
-          alt={ariaLabel}
+          alt=""
+          aria-hidden="true"
           className="w-full h-full object-contain pointer-events-none select-none"
           loading="eager"
+          decoding="sync"
           draggable={false}
-          onError={e => {
-            if (meta.fallbackImageSrc && !e.currentTarget.src.endsWith(meta.fallbackImageSrc)) {
-              e.currentTarget.src = meta.fallbackImageSrc;
-            }
+          onError={() => {
+            setImgFailed(true);
           }}
         />
       </span>

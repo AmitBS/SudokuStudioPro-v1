@@ -73,6 +73,7 @@ export interface GameSettings {
   completionAnimationStyle: CompletionAnimationStyle;
   inputMode: SudokuInputMode;
   customColors?: Record<number, string>;
+  showProgressBar?: boolean;
 }
 
 export interface ActiveGame {

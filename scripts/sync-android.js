@@ -25,6 +25,19 @@ async function sync() {
 
   // Copy dist/ to android-native/app/src/main/assets/
   fs.cpSync(distDir, androidAssetsDir, { recursive: true });
+
+  // Also ensure fruit images exist at multiple fallback paths for offline Android native webviews
+  const publicFruitsDir = path.resolve(rootDir, 'public/assets/fruits');
+  if (fs.existsSync(publicFruitsDir)) {
+    const targetSubDir = path.resolve(androidAssetsDir, 'assets/fruits');
+    const targetRootFruitsDir = path.resolve(androidAssetsDir, 'fruits');
+    fs.mkdirSync(targetSubDir, { recursive: true });
+    fs.mkdirSync(targetRootFruitsDir, { recursive: true });
+    fs.cpSync(publicFruitsDir, targetSubDir, { recursive: true });
+    fs.cpSync(publicFruitsDir, targetRootFruitsDir, { recursive: true });
+    fs.cpSync(publicFruitsDir, androidAssetsDir, { recursive: true });
+  }
+
   console.log('✓ Successfully copied dist/ files to android-native assets!');
 
   // 2. Generate native Android mipmap launcher icons from extraordinary master image

@@ -44,6 +44,7 @@ class MainActivity : ComponentActivity() {
         // Securely intercept and load React assets from local assets/ folder
         val assetLoader = WebViewAssetLoader.Builder()
             .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
+            .addPathHandler("/", WebViewAssetLoader.AssetsPathHandler(this))
             .build()
 
         webView.webViewClient = object : WebViewClient() {

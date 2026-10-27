@@ -87,6 +87,20 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
   const digitCounts = countPlacedDigits(game.board);
 
+  // Completion progress calculation (percentage of 81 cells correctly placed)
+  const totalCells = 81;
+  let correctPlacedCount = 0;
+  for (let r = 0; r < 9; r++) {
+    for (let c = 0; c < 9; c++) {
+      const cell = game.board[r][c];
+      if (cell.value !== 0 && cell.value === game.solution[r][c]) {
+        correctPlacedCount++;
+      }
+    }
+  }
+  const progressPercent = Math.min(100, Math.round((correctPlacedCount / totalCells) * 100));
+  const showProgressBar = settings.showProgressBar ?? true;
+
   // Cell Selection
   const handleSelectCell = (row: number, col: number) => {
     setSelectedCell({ row, col });
@@ -670,6 +684,63 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           </button>
         </div>
       </div>
+
+      {/* PUZZLE COMPLETION PROGRESS BAR (Toggled in Settings) */}
+      {showProgressBar && (
+        <div
+          className="w-full space-y-1.5 animate-in fade-in duration-200"
+          id="sudoku-progress-bar-container"
+        >
+          <div className="flex items-center justify-between text-xs font-semibold px-0.5">
+            <span
+              className="flex items-center gap-1.5"
+              style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
+            >
+              <span
+                className="w-2 h-2 rounded-full transition-transform duration-300"
+                style={{
+                  backgroundColor: progressPercent === 100 ? '#22C55E' : activePrimary,
+                }}
+              />
+              <span>Progress</span>
+              <span
+                className="font-mono font-bold"
+                style={{ color: 'var(--md-sys-color-on-surface)' }}
+              >
+                {progressPercent}%
+              </span>
+            </span>
+            <span
+              className="text-[11px] font-mono font-medium"
+              style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
+            >
+              {correctPlacedCount} / {totalCells} solved
+            </span>
+          </div>
+
+          <div
+            className="w-full h-2 sm:h-2.5 rounded-full overflow-hidden p-0.5 border shadow-inner"
+            style={{
+              backgroundColor: 'var(--md-sys-color-surface-container-high)',
+              borderColor: 'var(--md-sys-color-outline-variant)',
+            }}
+            role="progressbar"
+            aria-valuenow={progressPercent}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`Puzzle completion: ${progressPercent}%`}
+          >
+            <div
+              className="h-full rounded-full transition-all duration-300 ease-out"
+              style={{
+                width: `${progressPercent}%`,
+                backgroundColor: progressPercent === 100 ? '#22C55E' : activePrimary,
+                boxShadow: progressPercent > 0 ? `0 0 8px ${progressPercent === 100 ? '#22C55E' : activePrimary}66` : 'none',
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* SUDOKU BOARD */}
       <SudokuBoard
