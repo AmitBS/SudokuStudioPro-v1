@@ -41,3 +41,9 @@ Implemented a full-featured 'Saved Puzzles' management and bookmarking system al
 - **Difficulty Filtering**: Filters by difficulty tier ("All", "Easy", "Medium", "Hard", "Expert").
 - **Custom Tooltip**: Material 3 styled card displaying full date, games completed, average solve time, and fastest solve time.
 - **Weekly Highlights**: Summary cards showing 7-day total solves, weekly average time, and weekly best time.
+
+## Visual Real-Time Elapsed Timer & Auto-Pause (`src/components/sudoku/GameTimer.tsx`)
+- **Visual Design**: An interactive timer component with high-legibility tabular monospace time (`MM:SS` or `H:MM:SS`), pulsing live status indicator, and clock state iconography.
+- **Interactive Controls**: Direct click or tap on the timer component toggles pause/resume or displays the pause menu with smooth tactile feedback.
+- **Minimization Detection (`document.visibilitychange` / `window.blur` / `pagehide`)**: Automatically pauses the game when the user minimizes the browser, switches tabs, or switches to another mobile/desktop app, preventing score or streak degradation.
+- **Navigation Safety**: Automatically pauses the active game and synchronizes progress to `localStorage` whenever the user navigates away from the GameScreen.

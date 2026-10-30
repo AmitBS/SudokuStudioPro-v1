@@ -40,6 +40,7 @@ import {
   convertActiveGameToSavedPuzzle,
 } from '../../utils/savedPuzzles';
 import { launchVictoryConfetti, stopVictoryConfetti } from '../../utils/confettiVictory';
+import { GameTimer, formatElapsedTime } from '../sudoku/GameTimer';
 
 interface GameScreenProps {
   game: ActiveGame;
@@ -111,17 +112,87 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     return () => clearTimeout(timer);
   }, [isBookmarked, game, settings.soundEnabled, settings.hapticsEnabled]);
 
-  // Timer interval
+  // Real-time Timer interval (pauses when game is paused, completed, or window hidden)
   useEffect(() => {
     if (game.isPaused || game.isCompleted || game.isGameOver) return;
     const interval = setInterval(() => {
-      onUpdateGame(prev => ({
-        ...prev,
-        elapsedSeconds: prev.elapsedSeconds + 1,
-      }));
+      // Guard against background tab ticking
+      if (typeof document !== 'undefined' && (document.hidden || document.visibilityState === 'hidden')) {
+        return;
+      }
+      onUpdateGame(prev => {
+        if (prev.isPaused || prev.isCompleted || prev.isGameOver) return prev;
+        return {
+          ...prev,
+          elapsedSeconds: prev.elapsedSeconds + 1,
+        };
+      });
     }, 1000);
     return () => clearInterval(interval);
   }, [game.isPaused, game.isCompleted, game.isGameOver, onUpdateGame]);
+
+  // Auto-pause when user minimizes the game, switches tabs/windows, or navigates away
+  useEffect(() => {
+    const handlePauseOnBackground = () => {
+      if (!game.isCompleted && !game.isGameOver) {
+        onUpdateGame(prev => {
+          if (!prev.isPaused) {
+            const pausedGame = { ...prev, isPaused: true };
+            try {
+              localStorage.setItem('sudoku_active_game', JSON.stringify(pausedGame));
+            } catch {
+              // Ignore
+            }
+            return pausedGame;
+          }
+          return prev;
+        });
+        setIsPauseModalOpen(true);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden || document.visibilityState === 'hidden') {
+        handlePauseOnBackground();
+      }
+    };
+
+    const handleWindowBlur = () => {
+      handlePauseOnBackground();
+    };
+
+    const handlePageHide = () => {
+      handlePauseOnBackground();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleWindowBlur);
+    window.addEventListener('pagehide', handlePageHide);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleWindowBlur);
+      window.removeEventListener('pagehide', handlePageHide);
+    };
+  }, [game.isCompleted, game.isGameOver, onUpdateGame]);
+
+  // Auto-pause when navigating away from GameScreen (component unmount)
+  useEffect(() => {
+    return () => {
+      onUpdateGame(prev => {
+        if (!prev.isPaused && !prev.isCompleted && !prev.isGameOver) {
+          const pausedGame = { ...prev, isPaused: true };
+          try {
+            localStorage.setItem('sudoku_active_game', JSON.stringify(pausedGame));
+          } catch {
+            // Ignore
+          }
+          return pausedGame;
+        }
+        return prev;
+      });
+    };
+  }, [onUpdateGame]);
 
   // Mistakes calculation
   const mistakes = settings.mistakesMode !== 'off'
@@ -745,25 +816,21 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             )}
           </button>
 
-          {/* Timer & Pause */}
-          <div
-            className="flex items-center gap-1.5 font-mono text-sm font-bold pl-0.5"
-            style={{ color: 'var(--md-sys-color-on-surface)' }}
-          >
-            <span>{timeFormatted}</span>
-            <button
-              type="button"
-              onClick={() => {
+          {/* Visual Real-Time Elapsed Timer Component */}
+          <GameTimer
+            elapsedSeconds={game.elapsedSeconds}
+            isPaused={game.isPaused}
+            onTogglePause={() => {
+              if (game.isPaused) {
+                onUpdateGame(prev => ({ ...prev, isPaused: false }));
+                setIsPauseModalOpen(false);
+              } else {
                 onUpdateGame(prev => ({ ...prev, isPaused: true }));
                 setIsPauseModalOpen(true);
-              }}
-              aria-label="Pause Game"
-              style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
-              className="p-1 rounded-lg hover:opacity-75"
-            >
-              <Pause className="w-4 h-4 fill-current" />
-            </button>
-          </div>
+              }
+            }}
+            disabled={game.isCompleted || game.isGameOver}
+          />
         </div>
       </div>
 

@@ -403,6 +403,25 @@ function MainApp() {
     setCurrentScreen('game');
   };
 
+  // Safe navigation handler that auto-pauses active games when navigating away
+  const handleNavigate = (nextScreen: Screen) => {
+    if (currentScreen === 'game' && nextScreen !== 'game') {
+      setActiveGame(prev => {
+        if (prev && !prev.isPaused && !prev.isCompleted && !prev.isGameOver) {
+          const paused = { ...prev, isPaused: true };
+          try {
+            localStorage.setItem('sudoku_active_game', JSON.stringify(paused));
+          } catch {
+            // Ignore
+          }
+          return paused;
+        }
+        return prev;
+      });
+    }
+    setCurrentScreen(nextScreen);
+  };
+
   return (
     <div
       className="min-h-screen flex flex-col transition-colors overflow-x-hidden w-full max-w-full"
@@ -414,7 +433,7 @@ function MainApp() {
       {/* Universal Top Bar */}
       <TopBar
         currentScreen={currentScreen}
-        onNavigate={setCurrentScreen}
+        onNavigate={handleNavigate}
         onOpenContrastAudit={() => setIsContrastModalOpen(true)}
         hasActiveGame={!!activeGame && !activeGame.isCompleted && !activeGame.isGameOver}
       />
@@ -427,7 +446,7 @@ function MainApp() {
             playerStats={playerStats}
             onStartNewGame={handleStartNewGame}
             onResumeGame={() => setCurrentScreen('game')}
-            onNavigate={setCurrentScreen}
+            onNavigate={handleNavigate}
           />
         )}
 
@@ -439,7 +458,7 @@ function MainApp() {
             onGameCompleted={handleGameCompleted}
             onRestartGame={handleRestartGame}
             onStartNewGame={handleStartNewGame}
-            onNavigate={setCurrentScreen}
+            onNavigate={handleNavigate}
             onUpdateSettings={handleUpdateSettings}
           />
         )}
@@ -448,7 +467,7 @@ function MainApp() {
           <SettingsScreen
             settings={settings}
             onUpdateSettings={handleUpdateSettings}
-            onNavigate={setCurrentScreen}
+            onNavigate={handleNavigate}
             onOpenContrastAudit={() => setIsContrastModalOpen(true)}
           />
         )}
@@ -456,7 +475,7 @@ function MainApp() {
         {currentScreen === 'daily' && (
           <DailyScreen
             onStartDailyGame={handleStartDailyGame}
-            onNavigate={setCurrentScreen}
+            onNavigate={handleNavigate}
             streak={playerStats.currentStreak}
           />
         )}
@@ -464,7 +483,7 @@ function MainApp() {
         {currentScreen === 'capture' && (
           <CaptureScreen
             onStartCustomGame={handleStartCustomGame}
-            onNavigate={setCurrentScreen}
+            onNavigate={handleNavigate}
             inputMode={settings.inputMode}
             customColors={settings.customColors}
           />
@@ -473,7 +492,7 @@ function MainApp() {
         {currentScreen === 'saved' && (
           <SavedPuzzlesScreen
             onLoadSavedPuzzle={handleLoadSavedPuzzle}
-            onNavigate={setCurrentScreen}
+            onNavigate={handleNavigate}
             onStartNewGame={handleStartNewGame}
             settings={settings}
           />
@@ -482,7 +501,7 @@ function MainApp() {
         {currentScreen === 'history' && (
           <HistoryScreen
             history={history}
-            onNavigate={setCurrentScreen}
+            onNavigate={handleNavigate}
           />
         )}
 
@@ -491,7 +510,7 @@ function MainApp() {
             stats={playerStats}
             history={history}
             onResetStats={handleResetStats}
-            onNavigate={setCurrentScreen}
+            onNavigate={handleNavigate}
           />
         )}
       </main>
