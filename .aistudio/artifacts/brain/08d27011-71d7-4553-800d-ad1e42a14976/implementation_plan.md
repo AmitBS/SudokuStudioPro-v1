@@ -1,50 +1,36 @@
-# Implementation Plan: Correct Sequential Game Completion Animation (1 to 9)
+# Implementation: Saved Puzzles Section & Bookmarking
 
-Correct the Game Completion Sequence so that numbers animate strictly one by one in ascending order (1 through 9) into their respective number buttons below the board, ensuring each number group fully completes its movement before the next begins, and holding the final completion message until all nine numbers finish.
+Implemented a full-featured 'Saved Puzzles' management and bookmarking system allowing users to save challenging game boards and resume them anytime.
 
-## Proposed Changes
+## Key Features Implemented
 
-### 1. Robust Sequential Animation Controller (`NumberCelebrationParade.tsx`)
-- Refactor the sequence engine to use an explicit, ref-guarded asynchronous state machine:
-  - **Sequential Guarding**: Number $N+1$ cannot start until all 9 occurrences of number $N$ have traveled, landed into button $N$, and triggered button $N$'s landing pulse.
-  - **Re-render Immunity**: Store active callbacks, canvas animation state, and progress in `useRef` to prevent React re-renders from prematurely interrupting or resetting the sequence.
-  - **Motion Trail Preservation**: Keep the visible motion trail ribbons, 4 ghost afterimage echoes, and stardust sparks streaming behind each traveling number throughout its flight.
-  - **Flight Timing**:
-    - Lift: 280ms (all 9 instances lift upward with luminous aura).
-    - Slow Travel: 850ms (graceful Bézier flight across the screen into button $N$).
-    - Land & React: 150ms (button $N$ pulses with primary glow ring, chime sounds, light haptic feedback).
-    - Clean hand-off to number $N+1$.
+### 1. Persistent Storage Engine (`src/utils/savedPuzzles.ts`)
+- **Local Storage Schema**: Stores bookmarked puzzles under `sudoku_saved_puzzles` with timestamps, difficulty tier, cell states (given, placed, notes), elapsed timer, mistakes, hints, and completion progress.
+- **Real-Time Synchronization**: Emits window storage events (`sudoku_saved_puzzles_updated`) so the count badge and cards update instantly across screens without page reloads.
+- **Conversion Utilities**: Bidirectional converters `convertActiveGameToSavedPuzzle` and `convertSavedPuzzleToActiveGame` preserve exact game conditions upon resuming.
 
-### 2. Board Grid & Keypad Box Synchronization (`SudokuBoard.tsx` & `SudokuControls.tsx`)
-- **Board Cell Transitions**:
-  - Cells for numbers that haven't animated yet remain fully visible, bold, and clear on the board.
-  - When number $N$ lifts and travels, those 9 cells on the board transition cleanly as their numbers take flight into box $N$.
-  - Cells for numbers that have already completed remain cleared, visually confirming they have traveled to their box below.
-- **Numpad Reaction**:
-  - Number box $N$ below the board highlights and receives its 9 numbers, pulsing upon landing.
+### 2. In-Game Bookmarking (`src/components/screens/GameScreen.tsx` & `PauseModal.tsx`)
+- **HUD Bookmark Action**: A toggle button located right beside the timer and pause control. Tapping it switches between an outline bookmark and a golden filled bookmark icon (`BookmarkCheck`).
+- **Interactive Feedback**: Plays acoustic Web Audio confirmation sounds, triggers haptic feedback, and displays a floating status toast ("Puzzle bookmarked to Saved Puzzles!" / "Removed from Saved Puzzles").
+- **Pause Menu Integration**: The Pause modal includes a direct bookmark option so players pausing a challenging game can bookmark before navigating away.
+- **Active Progress Tracking**: Automatically updates saved puzzle states as players make progress on bookmarked boards.
 
-### 3. Strict Victory Modal Gate (`GameScreen.tsx`)
-- Decouple `VictoryModal` from any premature `game.isCompleted` state:
-  - The modal will be controlled strictly by `isVictoryModalVisible`, which remains `false` throughout the 1-second board freeze and the entire 1-to-9 parade.
-  - Only when number 9 finishes landing into box 9 does `handleNumberParadeComplete` trigger, opening the Victory Modal and saving completion statistics.
-  - Also route hint-based puzzle completions through this exact same sequence for consistency.
+### 3. Dedicated Saved Puzzles Screen (`src/components/screens/SavedPuzzlesScreen.tsx`)
+- **Filter Tabs**: Filter by difficulty ("All", "Easy", "Medium", "Hard", "Expert") with item counts.
+- **Mini 9x9 Board Preview**: Compact board preview showing given vs placed numbers and box borders.
+- **Progress & Metrics**: Visual progress bar (% solved, cell count), elapsed timer, mistakes, and hints used.
+- **Custom Renaming**: Inline title editing allowing players to label challenging boards (e.g., "X-Wing Practice", "Expert #4").
+- **Direct Resume & Deletion**: One-tap "Resume Game" to load the puzzle directly into the board, and a confirmation-protected delete option.
+- **Empty State**: Welcoming illustration and direct quick-start buttons when no puzzles are saved yet.
 
----
+### 4. Navigation Integration (`HomeScreen.tsx` & `TopBar.tsx`)
+- **Home Screen**: "Saved Puzzles" card with live badge counter showing saved puzzle count.
+- **Top Bar**: Direct navigation link in the universal top navigation bar.
 
-## Verification Plan
-
-### Automated Verification
-- Run `npm run build` to verify clean production compilation and Android asset synchronization.
-- Run `compile_applet` and `lint_applet` to ensure zero TypeScript, import, or syntax errors.
-
-### Manual Verification
-1. **1-Second Board Freeze**:
-   - Complete a puzzle by placing the final number.
-   - Verify the completed matrix is visible intact for 1.0 second.
-2. **Sequential 1-to-9 Flight Order**:
-   - Verify number 1 starts first: all nine 1s lift up and slowly fly down into box 1 with motion trails.
-   - Verify number 2 does NOT start until all nine 1s have landed into box 1.
-   - Verify numbers 2, 3, 4, 5, 6, 7, 8, 9 execute sequentially in exact numerical order.
-3. **Completion Modal Delay**:
-   - Confirm the Victory Modal does NOT appear during the animation.
-   - Confirm the Victory Modal only displays after number 9 finishes landing into box 9.
+## Particle-Based Victory Animation (`src/utils/confettiVictory.ts`)
+- Integrated `canvas-confetti` to trigger a multi-stage celebratory fireworks and confetti sequence when a puzzle is solved.
+- **Stage 1 (Salvo)**: Dual angled cannons from bottom-left (60°) and bottom-right (120°) firing vibrant rainbow and gold confetti.
+- **Stage 2 (Center Fountain)**: Upward burst of stars, circles, and squares.
+- **Stage 3 (Fireworks Cascade)**: 2.2-second cascading sky bursts across the viewport.
+- **Stage 4 (Golden Shimmer)**: Gentle golden starburst drift as the Victory Modal appears.
+- Fully tied into `GameScreen.tsx` solve events, number celebration parade, and `VictoryModal.tsx`, with automatic cleanup on reset.

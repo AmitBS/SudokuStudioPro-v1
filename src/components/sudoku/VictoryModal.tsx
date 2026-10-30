@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Difficulty } from '../../types/sudoku';
 import { useTheme } from '../../theme/themeContext';
 import { Trophy, Sparkles, Home, ArrowRight, RotateCcw, Share2, Check } from 'lucide-react';
+import { launchVictoryConfetti, stopVictoryConfetti } from '../../utils/confettiVictory';
 
 interface VictoryModalProps {
   isOpen: boolean;
@@ -27,86 +28,15 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
   isNewBest = false,
 }) => {
   const { tokens } = useTheme();
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [copied, setCopied] = useState<boolean>(false);
 
-  // Confetti Animation Effect
+  // Trigger high-polish particle victory confetti
   useEffect(() => {
-    if (!isOpen) return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let animationFrameId: number;
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const colors = ['#f59e0b', '#3b82f6', '#10b981', '#ec4899', '#8b5cf6', '#f43f5e', '#06b6d4'];
-    const particleCount = 120;
-    const particles = Array.from({ length: particleCount }).map(() => ({
-      x: canvas.width / 2 + (Math.random() - 0.5) * 200,
-      y: canvas.height * 0.45 + (Math.random() - 0.5) * 100,
-      vx: (Math.random() - 0.5) * 18,
-      vy: (Math.random() - 0.8) * 18 - 4,
-      size: Math.random() * 8 + 4,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      rotation: Math.random() * 360,
-      rotationSpeed: (Math.random() - 0.5) * 10,
-      opacity: 1,
-      gravity: 0.35,
-      drag: 0.98,
-    }));
-
-    let frame = 0;
-    const render = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      frame++;
-
-      let hasActiveParticles = false;
-      particles.forEach(p => {
-        if (p.opacity <= 0) return;
-        hasActiveParticles = true;
-
-        p.vx *= p.drag;
-        p.vy = p.vy * p.drag + p.gravity;
-        p.x += p.vx;
-        p.y += p.vy;
-        p.rotation += p.rotationSpeed;
-
-        if (frame > 60) {
-          p.opacity -= 0.012;
-        }
-
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate((p.rotation * Math.PI) / 180);
-        ctx.globalAlpha = Math.max(0, p.opacity);
-        ctx.fillStyle = p.color;
-
-        // Draw rectangle confetti
-        ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
-        ctx.restore();
-      });
-
-      if (hasActiveParticles || frame < 180) {
-        animationFrameId = requestAnimationFrame(render);
-      }
-    };
-
-    render();
-
-    const handleResize = () => {
-      if (!canvas) return;
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
+    if (isOpen) {
+      launchVictoryConfetti();
+    }
     return () => {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('resize', handleResize);
+      stopVictoryConfetti();
     };
   }, [isOpen]);
 
@@ -137,13 +67,6 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
       className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs select-none"
       style={{ backgroundColor: 'rgba(9, 13, 22, 0.8)' }}
     >
-      {/* Background Celebration Confetti Canvas */}
-      <canvas
-        ref={canvasRef}
-        className="fixed inset-0 pointer-events-none z-10"
-        aria-hidden="true"
-      />
-
       <div
         style={{
           backgroundColor: 'var(--md-sys-color-surface)',

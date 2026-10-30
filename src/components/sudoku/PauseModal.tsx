@@ -1,7 +1,7 @@
 import React from 'react';
 import { Difficulty } from '../../types/sudoku';
 import { useTheme } from '../../theme/themeContext';
-import { Play, RotateCcw, Home } from 'lucide-react';
+import { Play, RotateCcw, Home, Bookmark, BookmarkCheck } from 'lucide-react';
 
 interface PauseModalProps {
   isOpen: boolean;
@@ -10,6 +10,8 @@ interface PauseModalProps {
   onQuitToHome: () => void;
   elapsedSeconds: number;
   difficulty: Difficulty;
+  isBookmarked?: boolean;
+  onToggleBookmark?: () => void;
 }
 
 export const PauseModal: React.FC<PauseModalProps> = ({
@@ -19,6 +21,8 @@ export const PauseModal: React.FC<PauseModalProps> = ({
   onQuitToHome,
   elapsedSeconds,
   difficulty,
+  isBookmarked,
+  onToggleBookmark,
 }) => {
   const { activePrimary, activeOnPrimary } = useTheme();
 
@@ -72,6 +76,31 @@ export const PauseModal: React.FC<PauseModalProps> = ({
             <Play className="w-4 h-4 fill-current" />
             Resume Game
           </button>
+
+          {onToggleBookmark && (
+            <button
+              type="button"
+              onClick={onToggleBookmark}
+              style={{
+                backgroundColor: isBookmarked ? 'rgba(245, 158, 11, 0.15)' : 'var(--md-sys-color-surface-container-high)',
+                borderColor: isBookmarked ? '#F59E0B' : 'var(--md-sys-color-outline-variant)',
+                color: isBookmarked ? '#F59E0B' : 'var(--md-sys-color-on-surface)',
+              }}
+              className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold border flex items-center justify-center gap-2 hover:opacity-85 transition-all"
+            >
+              {isBookmarked ? (
+                <>
+                  <BookmarkCheck className="w-4 h-4 fill-current" />
+                  <span>Bookmarked in Saved Puzzles</span>
+                </>
+              ) : (
+                <>
+                  <Bookmark className="w-4 h-4" />
+                  <span>Bookmark Puzzle for Later</span>
+                </>
+              )}
+            </button>
+          )}
 
           <button
             type="button"

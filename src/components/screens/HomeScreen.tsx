@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ActiveGame, Difficulty, PlayerStats, Screen } from '../../types/sudoku';
 import { useTheme } from '../../theme/themeContext';
-import { Play, Calendar, Camera, BookmarkCheck, ArrowRight, Trophy, Flame } from 'lucide-react';
+import { Play, Calendar, Camera, BookmarkCheck, ArrowRight, Trophy, Flame, History } from 'lucide-react';
+import { loadSavedPuzzles } from '../../utils/savedPuzzles';
 
 interface HomeScreenProps {
   activeGame: ActiveGame | null;
@@ -85,6 +86,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onNavigate,
 }) => {
   const { activePrimary, activeOnPrimary, isDark } = useTheme();
+  const [savedCount, setSavedCount] = useState<number>(() => loadSavedPuzzles().length);
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setSavedCount(loadSavedPuzzles().length);
+    };
+    window.addEventListener('sudoku_saved_puzzles_updated', handleUpdate);
+    return () => window.removeEventListener('sudoku_saved_puzzles_updated', handleUpdate);
+  }, []);
 
   const difficulties: {
     level: Difficulty;
@@ -375,30 +385,41 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </p>
           </button>
 
-          {/* Saved Sudoku */}
+          {/* Saved Puzzles */}
           <button
             type="button"
-            onClick={() => onNavigate('history')}
+            onClick={() => onNavigate('saved')}
             style={{
               backgroundColor: 'var(--md-sys-color-surface)',
               borderColor: 'var(--md-sys-color-outline-variant)',
             }}
-            className="p-5 rounded-2xl border transition-all text-left group hover:opacity-90 shadow-xs"
+            className="p-5 rounded-2xl border transition-all text-left group hover:opacity-90 shadow-xs relative"
           >
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/15 text-indigo-500 flex items-center justify-center mb-3">
-              <BookmarkCheck className="w-5 h-5" />
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center">
+                <BookmarkCheck className="w-5 h-5" />
+              </div>
+              <span
+                className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                style={{
+                  backgroundColor: savedCount > 0 ? 'rgba(245, 158, 11, 0.16)' : 'var(--md-sys-color-surface-container-high)',
+                  color: savedCount > 0 ? '#F59E0B' : 'var(--md-sys-color-on-surface-variant)',
+                }}
+              >
+                {savedCount} saved
+              </span>
             </div>
             <div
               className="text-base font-bold mb-1"
               style={{ color: 'var(--md-sys-color-on-surface)' }}
             >
-              Saved Sudoku
+              Saved Puzzles
             </div>
             <p
               className="text-xs leading-relaxed"
               style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
             >
-              Review completed game archives, match statistics, and bookmarks.
+              Bookmark and replay challenging game boards anytime.
             </p>
           </button>
         </div>
@@ -406,22 +427,33 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
       {/* INSIGHTS SECTION */}
       <section className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <h2
             className="text-xl font-bold"
             style={{ color: 'var(--md-sys-color-on-background)' }}
           >
             Insights & Performance
           </h2>
-          <button
-            type="button"
-            onClick={() => onNavigate('stats')}
-            style={{ color: 'var(--md-sys-color-primary)' }}
-            className="text-xs font-bold hover:underline flex items-center gap-1"
-          >
-            <span>Full Stats</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => onNavigate('history')}
+              style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
+              className="text-xs font-semibold hover:underline flex items-center gap-1"
+            >
+              <History className="w-3.5 h-3.5" />
+              <span>Match History</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigate('stats')}
+              style={{ color: 'var(--md-sys-color-primary)' }}
+              className="text-xs font-bold hover:underline flex items-center gap-1"
+            >
+              <span>Full Stats</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

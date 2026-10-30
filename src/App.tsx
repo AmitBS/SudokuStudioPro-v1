@@ -6,6 +6,7 @@ import {
   GameHistoryItem,
   GameSettings,
   PlayerStats,
+  SavedPuzzle,
   Screen,
 } from './types/sudoku';
 import { TopBar } from './components/layout/TopBar';
@@ -16,7 +17,9 @@ import { DailyScreen } from './components/screens/DailyScreen';
 import { CaptureScreen } from './components/screens/CaptureScreen';
 import { HistoryScreen } from './components/screens/HistoryScreen';
 import { StatisticsScreen } from './components/screens/StatisticsScreen';
+import { SavedPuzzlesScreen } from './components/screens/SavedPuzzlesScreen';
 import { ContrastAuditModal } from './components/modals/ContrastAuditModal';
+import { convertSavedPuzzleToActiveGame } from './utils/savedPuzzles';
 import {
   createBoardMatrix,
   generatePuzzle,
@@ -387,6 +390,18 @@ function MainApp() {
     saveHistory([]);
   };
 
+  // Load a Saved Puzzle
+  const handleLoadSavedPuzzle = (saved: SavedPuzzle) => {
+    const gameToLoad = convertSavedPuzzleToActiveGame(saved);
+    setActiveGame(gameToLoad);
+    try {
+      localStorage.setItem('sudoku_active_game', JSON.stringify(gameToLoad));
+    } catch {
+      // Ignore
+    }
+    setCurrentScreen('game');
+  };
+
   return (
     <div
       className="min-h-screen flex flex-col transition-colors overflow-x-hidden w-full max-w-full"
@@ -451,6 +466,15 @@ function MainApp() {
             onNavigate={setCurrentScreen}
             inputMode={settings.inputMode}
             customColors={settings.customColors}
+          />
+        )}
+
+        {currentScreen === 'saved' && (
+          <SavedPuzzlesScreen
+            onLoadSavedPuzzle={handleLoadSavedPuzzle}
+            onNavigate={setCurrentScreen}
+            onStartNewGame={handleStartNewGame}
+            settings={settings}
           />
         )}
 

@@ -33,8 +33,9 @@ export const TopBar: React.FC<TopBarProps> = ({
     { screen: 'home', label: 'Home' },
     { screen: 'game', label: 'Current Game', visible: hasActiveGame },
     { screen: 'daily', label: 'Daily' },
+    { screen: 'saved', label: 'Saved Puzzles' },
     { screen: 'capture', label: 'Capture' },
-    { screen: 'history', label: 'Saved & History' },
+    { screen: 'history', label: 'History' },
     { screen: 'stats', label: 'Statistics' },
   ];
 

@@ -10,7 +10,7 @@ export type HintsMode = 'logic' | 'direct';
 
 export type CompletionAnimationStyle = 'ribbon' | 'numbers_only';
 
-export type Screen = 'home' | 'game' | 'settings' | 'daily' | 'capture' | 'history' | 'stats';
+export type Screen = 'home' | 'game' | 'settings' | 'daily' | 'capture' | 'history' | 'stats' | 'saved';
 
 export interface CellData {
   row: number;
@@ -130,5 +130,25 @@ export interface DailyChallengeInfo {
   difficulty: Difficulty;
   completed: boolean;
   timeSeconds?: number;
+  score?: number;
+}
+
+export interface SavedPuzzle {
+  id: string;
+  title?: string;
+  difficulty: Difficulty;
+  savedAt: string; // ISO string
+  board: BoardMatrix;
+  initialBoard: number[][];
+  solution: number[][];
+  elapsedSeconds: number;
+  mistakes: number;
+  hintsUsed: number;
+  logicHintsUsed?: number;
+  isDaily?: boolean;
+  dailyDate?: string;
+  progressPercent: number;
+  solvedCells: number;
+  totalCells: number;
   score?: number;
 }

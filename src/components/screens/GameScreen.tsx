@@ -29,9 +29,17 @@ import {
   playUnitCompletionSound,
   playCelebrationFanfare,
   playVictoryFanfare,
+  playSuccessSound,
   triggerHaptic,
 } from '../../utils/audio';
-import { ArrowLeft, Pause, Play, RotateCcw, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Pause, Play, RotateCcw, AlertTriangle, Bookmark, BookmarkCheck } from 'lucide-react';
+import {
+  isPuzzleSaved,
+  savePuzzleToStorage,
+  removeSavedPuzzle,
+  convertActiveGameToSavedPuzzle,
+} from '../../utils/savedPuzzles';
+import { launchVictoryConfetti, stopVictoryConfetti } from '../../utils/confettiVictory';
 
 interface GameScreenProps {
   game: ActiveGame;
@@ -67,6 +75,41 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   const [celebratingNumber, setCelebratingNumber] = useState<number | null>(null);
   const [completedParadeNumbers, setCompletedParadeNumbers] = useState<number[]>([]);
   const [isVictoryModalVisible, setIsVictoryModalVisible] = useState<boolean>(false);
+  const [isBookmarked, setIsBookmarked] = useState<boolean>(() => isPuzzleSaved(game.id));
+  const [bookmarkToast, setBookmarkToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIsBookmarked(isPuzzleSaved(game.id));
+  }, [game.id]);
+
+  // Keep saved puzzle in sync with current moves if it is bookmarked
+  useEffect(() => {
+    if (isPuzzleSaved(game.id) && !game.isCompleted && !game.isGameOver) {
+      savePuzzleToStorage(convertActiveGameToSavedPuzzle(game));
+    }
+  }, [game.board, game.elapsedSeconds, game.mistakes, game.hintsUsed, game.id, game.isCompleted, game.isGameOver]);
+
+  const handleToggleBookmark = useCallback(() => {
+    if (isBookmarked) {
+      removeSavedPuzzle(game.id);
+      setIsBookmarked(false);
+      setBookmarkToast('Removed from Saved Puzzles');
+      playTapSound(settings.soundEnabled);
+      triggerHaptic('light', settings.hapticsEnabled);
+    } else {
+      const saved = convertActiveGameToSavedPuzzle(game);
+      savePuzzleToStorage(saved);
+      setIsBookmarked(true);
+      setBookmarkToast('Puzzle bookmarked to Saved Puzzles!');
+      playSuccessSound(settings.soundEnabled);
+      triggerHaptic('success', settings.hapticsEnabled);
+    }
+
+    const timer = setTimeout(() => {
+      setBookmarkToast(null);
+    }, 2400);
+    return () => clearTimeout(timer);
+  }, [isBookmarked, game, settings.soundEnabled, settings.hapticsEnabled]);
 
   // Timer interval
   useEffect(() => {
@@ -253,6 +296,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           playCelebrationFanfare(settings.soundEnabled);
           triggerHaptic('celebration', settings.hapticsEnabled);
           setIsNumberParadeActive(true);
+          launchVictoryConfetti();
         }, 1000);
         return;
       }
@@ -399,6 +443,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     setCelebratingNumber(null);
     setCompletedParadeNumbers([1, 2, 3, 4, 5, 6, 7, 8, 9]);
     setIsVictoryModalVisible(true);
+    launchVictoryConfetti();
 
     const finalCompletedGame: ActiveGame = {
       ...game,
@@ -408,14 +453,18 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     onGameCompleted(finalCompletedGame);
   }, [game, onUpdateGame, onGameCompleted]);
 
-  // Reset celebration parade when a new game starts or is restarted
+  // Reset celebration parade and particle confetti when a new game starts or is restarted
   useEffect(() => {
     if (!game.isCompleted) {
       setIsVictoryModalVisible(false);
       setIsNumberParadeActive(false);
       setCelebratingNumber(null);
       setCompletedParadeNumbers([]);
+      stopVictoryConfetti();
     }
+    return () => {
+      stopVictoryConfetti();
+    };
   }, [game.id, game.isCompleted]);
 
   // Quick Hint
@@ -514,6 +563,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         playCelebrationFanfare(settings.soundEnabled);
         triggerHaptic('celebration', settings.hapticsEnabled);
         setIsNumberParadeActive(true);
+        launchVictoryConfetti();
       }, 1000);
       return;
     }
@@ -567,6 +617,16 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     setActiveLogicStep(null);
   };
 
+  // Toggle Pencil / Candidate Notes Mode
+  const handleToggleNotesMode = useCallback(() => {
+    setIsNotesMode(prev => {
+      const next = !prev;
+      playNoteEntrySound(settings.soundEnabled, !next);
+      triggerHaptic('note', settings.hapticsEnabled);
+      return next;
+    });
+  }, [settings.soundEnabled, settings.hapticsEnabled]);
+
   // Keyboard navigation & inputs
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -584,15 +644,15 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         setSelectedCell(prev => prev && { row: prev.row, col: Math.max(0, prev.col - 1) });
       } else if (e.key === 'ArrowRight' && selectedCell) {
         setSelectedCell(prev => prev && { row: prev.row, col: Math.min(8, prev.col + 1) });
-      } else if (e.key.toLowerCase() === 'n') {
-        setIsNotesMode(prev => !prev);
+      } else if (e.key.toLowerCase() === 'p' || e.key.toLowerCase() === 'n') {
+        handleToggleNotesMode();
       } else if (e.key.toLowerCase() === 'u') {
         handleUndo();
       } else if (e.key.toLowerCase() === 'h') {
         handleHint();
       } else if (e.key.toLowerCase() === 'l') {
         handleAskLogic();
-      } else if (e.key === 'Escape' || e.key.toLowerCase() === 'p') {
+      } else if (e.key === 'Escape') {
         onUpdateGame(prev => ({ ...prev, isPaused: !prev.isPaused }));
         setIsPauseModalOpen(prev => !prev);
       }
@@ -600,7 +660,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleNumberInput, handleErase, handleUndo, selectedCell, isPauseModalOpen, isLogicModalOpen, showConfirmQuit, onUpdateGame]);
+  }, [handleNumberInput, handleErase, handleUndo, handleToggleNotesMode, selectedCell, isPauseModalOpen, isLogicModalOpen, showConfirmQuit, onUpdateGame]);
 
   const handleBackToHome = () => {
     if (settings.confirmNewGame && !game.isCompleted && !game.isGameOver) {
@@ -664,26 +724,64 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           </div>
         )}
 
-        {/* Timer & Pause */}
-        <div
-          className="flex items-center gap-1.5 font-mono text-sm font-bold"
-          style={{ color: 'var(--md-sys-color-on-surface)' }}
-        >
-          <span>{timeFormatted}</span>
+        {/* Timer, Pause & Bookmark Action Buttons */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Bookmark Button */}
           <button
             type="button"
-            onClick={() => {
-              onUpdateGame(prev => ({ ...prev, isPaused: true }));
-              setIsPauseModalOpen(true);
+            onClick={handleToggleBookmark}
+            aria-label={isBookmarked ? 'Remove from Saved Puzzles' : 'Save puzzle for later'}
+            title={isBookmarked ? 'Saved to Bookmarks (click to remove)' : 'Bookmark puzzle to play later'}
+            style={{
+              color: isBookmarked ? '#F59E0B' : 'var(--md-sys-color-on-surface-variant)',
+              backgroundColor: isBookmarked ? 'rgba(245, 158, 11, 0.16)' : 'transparent',
             }}
-            aria-label="Pause Game"
-            style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
-            className="p-1 rounded-lg hover:opacity-75"
+            className="p-1.5 rounded-lg hover:opacity-85 transition-all flex items-center justify-center active:scale-90"
           >
-            <Pause className="w-4 h-4 fill-current" />
+            {isBookmarked ? (
+              <BookmarkCheck className="w-4 h-4 fill-current transition-transform scale-105" />
+            ) : (
+              <Bookmark className="w-4 h-4" />
+            )}
           </button>
+
+          {/* Timer & Pause */}
+          <div
+            className="flex items-center gap-1.5 font-mono text-sm font-bold pl-0.5"
+            style={{ color: 'var(--md-sys-color-on-surface)' }}
+          >
+            <span>{timeFormatted}</span>
+            <button
+              type="button"
+              onClick={() => {
+                onUpdateGame(prev => ({ ...prev, isPaused: true }));
+                setIsPauseModalOpen(true);
+              }}
+              aria-label="Pause Game"
+              style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
+              className="p-1 rounded-lg hover:opacity-75"
+            >
+              <Pause className="w-4 h-4 fill-current" />
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Floating Bookmark Toast Feedback */}
+      {bookmarkToast && (
+        <div
+          role="status"
+          className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold shadow-xl flex items-center gap-2 border animate-in fade-in slide-in-from-top-3 duration-200"
+          style={{
+            backgroundColor: 'var(--md-sys-color-surface-container-highest)',
+            color: 'var(--md-sys-color-on-surface)',
+            borderColor: 'var(--md-sys-color-outline-variant)',
+          }}
+        >
+          <BookmarkCheck className="w-4 h-4 text-amber-500 fill-current shrink-0" />
+          <span>{bookmarkToast}</span>
+        </div>
+      )}
 
       {/* PUZZLE COMPLETION PROGRESS BAR (Toggled in Settings) */}
       {showProgressBar && (
@@ -763,7 +861,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         onUndo={handleUndo}
         onErase={handleErase}
         isNotesMode={isNotesMode}
-        onToggleNotesMode={() => setIsNotesMode(prev => !prev)}
+        onToggleNotesMode={handleToggleNotesMode}
         onHint={handleHint}
         onAskLogic={handleAskLogic}
         digitCounts={digitCounts}
@@ -915,6 +1013,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         }}
         elapsedSeconds={game.elapsedSeconds}
         difficulty={game.difficulty}
+        isBookmarked={isBookmarked}
+        onToggleBookmark={handleToggleBookmark}
       />
 
       {/* Number Celebration Parade with Firecrackers & Ascending 1-9 Flight */}
