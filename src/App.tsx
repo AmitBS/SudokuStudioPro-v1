@@ -380,6 +380,7 @@ function MainApp() {
       hintsUsed: game.hintsUsed + game.logicHintsUsed,
       won: true,
       score: game.score,
+      timestamp: Date.now(),
     };
     saveHistory([historyEntry, ...history]);
   };
@@ -488,6 +489,7 @@ function MainApp() {
         {currentScreen === 'stats' && (
           <StatisticsScreen
             stats={playerStats}
+            history={history}
             onResetStats={handleResetStats}
             onNavigate={setCurrentScreen}
           />

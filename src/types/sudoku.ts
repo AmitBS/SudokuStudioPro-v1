@@ -122,6 +122,7 @@ export interface GameHistoryItem {
   hintsUsed: number;
   won: boolean;
   score: number;
+  timestamp?: number;
 }
 
 export interface DailyChallengeInfo {

@@ -34,3 +34,10 @@ Implemented a full-featured 'Saved Puzzles' management and bookmarking system al
 - **Stage 3 (Fireworks Cascade)**: 2.2-second cascading sky bursts across the viewport.
 - **Stage 4 (Golden Shimmer)**: Gentle golden starburst drift as the Victory Modal appears.
 - Fully tied into `GameScreen.tsx` solve events, number celebration parade, and `VictoryModal.tsx`, with automatic cleanup on reset.
+
+## Weekly Performance Chart (`src/components/screens/StatisticsScreen.tsx`)
+- Installed `recharts` and created a responsive line chart visualizing solve completion times over the last 7 days.
+- **Interactive Metrics**: Supports toggling between Average Solve Time, Fastest Solve Time, or Both.
+- **Difficulty Filtering**: Filters by difficulty tier ("All", "Easy", "Medium", "Hard", "Expert").
+- **Custom Tooltip**: Material 3 styled card displaying full date, games completed, average solve time, and fastest solve time.
+- **Weekly Highlights**: Summary cards showing 7-day total solves, weekly average time, and weekly best time.
