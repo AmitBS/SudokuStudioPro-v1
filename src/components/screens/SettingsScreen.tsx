@@ -4,8 +4,9 @@ import { useTheme } from '../../theme/themeContext';
 import { MaterialSwitch } from '../common/MaterialSwitch';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { AccentSwatchPicker } from '../common/AccentSwatchPicker';
-import { ArrowLeft, Monitor, Sun, Moon, Volume2, ShieldCheck, Gamepad2, Palette, RotateCcw, Pipette, Check } from 'lucide-react';
+import { ArrowLeft, Monitor, Sun, Moon, Volume2, ShieldCheck, Gamepad2, Palette, RotateCcw, Pipette, Check, HelpCircle } from 'lucide-react';
 import { playSuccessSound, playClickSound } from '../../utils/audio';
+import { HowToPlayModal } from '../modals/HowToPlayModal';
 import {
   DEFAULT_CUSTOM_COLORS,
   DEFAULT_SUDOKU_COLORS,
@@ -222,6 +223,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onOpenContrastAudit,
 }) => {
   const { themeMode, setThemeMode, accentColor, setAccentColor } = useTheme();
+  const [isHowToModalOpen, setIsHowToModalOpen] = useState(false);
 
   const handleThemeChange = (mode: ThemeMode) => {
     setThemeMode(mode);
@@ -827,6 +829,56 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           View Contrast Metrics
         </button>
       </section>
+
+      {/* SECTION 6: How to Play & Candidate Guide */}
+      <section
+        className="p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        style={{
+          backgroundColor: 'var(--md-sys-color-surface-container)',
+          borderColor: 'var(--md-sys-color-outline-variant)',
+        }}
+      >
+        <div className="flex items-start gap-3">
+          <HelpCircle className="w-6 h-6 text-primary shrink-0 mt-0.5" />
+          <div>
+            <div
+              className="text-sm font-bold"
+              style={{ color: 'var(--md-sys-color-on-surface)' }}
+            >
+              How to Play & Candidate Guide
+            </div>
+            <div
+              className="text-xs mt-0.5"
+              style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
+            >
+              Interactive step-by-step tutorial on Pencil Mode, candidate calculations, and quick-note gestures.
+            </div>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            playClickSound(settings.soundEnabled);
+            setIsHowToModalOpen(true);
+          }}
+          style={{
+            backgroundColor: 'var(--md-sys-color-primary)',
+            color: 'var(--md-sys-color-on-primary)',
+          }}
+          className="px-4 py-2 text-xs font-bold rounded-xl shadow-xs hover:opacity-90 active:scale-95 transition-all whitespace-nowrap self-start sm:self-auto flex items-center gap-1.5"
+        >
+          <HelpCircle className="w-4 h-4" />
+          <span>Launch Tutorial</span>
+        </button>
+      </section>
+
+      {/* Interactive How-To Play Modal */}
+      <HowToPlayModal
+        isOpen={isHowToModalOpen}
+        onClose={() => setIsHowToModalOpen(false)}
+        soundEnabled={settings.soundEnabled}
+        hapticsEnabled={settings.hapticsEnabled}
+      />
     </div>
   );
 };

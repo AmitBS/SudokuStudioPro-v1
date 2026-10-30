@@ -47,3 +47,12 @@ Implemented a full-featured 'Saved Puzzles' management and bookmarking system al
 - **Interactive Controls**: Direct click or tap on the timer component toggles pause/resume or displays the pause menu with smooth tactile feedback.
 - **Minimization Detection (`document.visibilitychange` / `window.blur` / `pagehide`)**: Automatically pauses the game when the user minimizes the browser, switches tabs, or switches to another mobile/desktop app, preventing score or streak degradation.
 - **Navigation Safety**: Automatically pauses the active game and synchronizes progress to `localStorage` whenever the user navigates away from the GameScreen.
+
+## Interactive Step-by-Step How-To Modal (`src/components/modals/HowToPlayModal.tsx`)
+- **First-Game Trigger**: Automatically triggers when a player starts their first game (stored in `localStorage.getItem('sudoku_has_seen_howto_guide')`), automatically pausing the game timer during reading.
+- **Step 1: Pencil Mode vs Normal Mode**: Explains the difference between placing bold final numbers vs pencil notes (candidates), keyboard shortcuts (N or P toggle), and toolbar states.
+- **Step 2: Hands-On Interactive Sandbox**: Live interactive cell where players can practice toggling Pencil Mode and tapping numbers 1–9 with real sound and haptic feedback.
+- **Step 3: Smart Candidate Calculation & Peer Elimination**: Illustrates how candidates are calculated and how placing a number automatically clears candidate notes across row, column, and 3x3 box peers.
+- **Step 4: Pro Gestures & Deductive AI Tutor**: Details the 2-second hold quick-notes popover and the "Ask Logic" Deductive Tutor for next-step reasoning.
+- **Accessible & Re-launchable**: Easily re-opened at any time from the GameScreen header (`HelpCircle`), the Pause menu, or the Settings Screen tutorial launcher.
+

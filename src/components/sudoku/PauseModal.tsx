@@ -1,7 +1,7 @@
 import React from 'react';
 import { Difficulty } from '../../types/sudoku';
 import { useTheme } from '../../theme/themeContext';
-import { Play, RotateCcw, Home, Bookmark, BookmarkCheck } from 'lucide-react';
+import { Play, RotateCcw, Home, Bookmark, BookmarkCheck, HelpCircle } from 'lucide-react';
 
 interface PauseModalProps {
   isOpen: boolean;
@@ -12,6 +12,7 @@ interface PauseModalProps {
   difficulty: Difficulty;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
+  onOpenHowToGuide?: () => void;
 }
 
 export const PauseModal: React.FC<PauseModalProps> = ({
@@ -23,6 +24,7 @@ export const PauseModal: React.FC<PauseModalProps> = ({
   difficulty,
   isBookmarked,
   onToggleBookmark,
+  onOpenHowToGuide,
 }) => {
   const { activePrimary, activeOnPrimary } = useTheme();
 
@@ -99,6 +101,22 @@ export const PauseModal: React.FC<PauseModalProps> = ({
                   <span>Bookmark Puzzle for Later</span>
                 </>
               )}
+            </button>
+          )}
+
+          {onOpenHowToGuide && (
+            <button
+              type="button"
+              onClick={onOpenHowToGuide}
+              style={{
+                backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                borderColor: 'rgba(245, 158, 11, 0.35)',
+                color: '#F59E0B',
+              }}
+              className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold border flex items-center justify-center gap-2 hover:opacity-85 transition-all"
+            >
+              <HelpCircle className="w-4 h-4" />
+              <span>Notes & Candidate Guide</span>
             </button>
           )}
 

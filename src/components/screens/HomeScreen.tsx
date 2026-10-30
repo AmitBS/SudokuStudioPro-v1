@@ -434,12 +434,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           >
             Insights & Performance
           </h2>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between w-full gap-3">
             <button
               type="button"
               onClick={() => onNavigate('history')}
               style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
-              className="text-xs font-semibold hover:underline flex items-center gap-1"
+              className="text-xs font-semibold hover:underline flex items-center gap-1 justify-start text-left"
             >
               <History className="w-3.5 h-3.5" />
               <span>Match History</span>
@@ -448,7 +448,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               type="button"
               onClick={() => onNavigate('stats')}
               style={{ color: 'var(--md-sys-color-primary)' }}
-              className="text-xs font-bold hover:underline flex items-center gap-1"
+              className="text-xs font-bold hover:underline flex items-center gap-1 ml-auto justify-end text-right"
             >
               <span>Full Stats</span>
               <ArrowRight className="w-3.5 h-3.5" />

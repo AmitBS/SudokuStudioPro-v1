@@ -32,7 +32,7 @@ import {
   playSuccessSound,
   triggerHaptic,
 } from '../../utils/audio';
-import { ArrowLeft, Pause, Play, RotateCcw, AlertTriangle, Bookmark, BookmarkCheck } from 'lucide-react';
+import { ArrowLeft, Pause, Play, RotateCcw, AlertTriangle, Bookmark, BookmarkCheck, HelpCircle } from 'lucide-react';
 import {
   isPuzzleSaved,
   savePuzzleToStorage,
@@ -41,6 +41,7 @@ import {
 } from '../../utils/savedPuzzles';
 import { launchVictoryConfetti, stopVictoryConfetti } from '../../utils/confettiVictory';
 import { GameTimer, formatElapsedTime } from '../sudoku/GameTimer';
+import { HowToPlayModal } from '../modals/HowToPlayModal';
 
 interface GameScreenProps {
   game: ActiveGame;
@@ -111,6 +112,34 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     }, 2400);
     return () => clearTimeout(timer);
   }, [isBookmarked, game, settings.soundEnabled, settings.hapticsEnabled]);
+
+  // First game onboarding How-To modal state
+  const [isHowToModalOpen, setIsHowToModalOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const hasSeen = localStorage.getItem('sudoku_has_seen_howto_guide');
+      return !hasSeen;
+    } catch {
+      return false;
+    }
+  });
+
+  // When starting their first game, ensure game is paused while guide is open
+  useEffect(() => {
+    if (isHowToModalOpen && !game.isPaused) {
+      onUpdateGame(prev => ({ ...prev, isPaused: true }));
+    }
+  }, [isHowToModalOpen, onUpdateGame]);
+
+  const handleCloseHowToModal = useCallback(() => {
+    try {
+      localStorage.setItem('sudoku_has_seen_howto_guide', 'true');
+    } catch {
+      // Ignore
+    }
+    setIsHowToModalOpen(false);
+    onUpdateGame(prev => ({ ...prev, isPaused: false }));
+  }, [onUpdateGame]);
 
   // Real-time Timer interval (pauses when game is paused, completed, or window hidden)
   useEffect(() => {
@@ -795,8 +824,26 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           </div>
         )}
 
-        {/* Timer, Pause & Bookmark Action Buttons */}
+        {/* Timer, Pause, Bookmark & Guide Action Buttons */}
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Notes & Candidate How-To Guide Button */}
+          <button
+            type="button"
+            onClick={() => {
+              onUpdateGame(prev => ({ ...prev, isPaused: true }));
+              setIsHowToModalOpen(true);
+            }}
+            aria-label="Notes & Candidate Guide"
+            title="How-To: Note-taking & candidate calculation guide"
+            style={{
+              color: isHowToModalOpen ? '#F59E0B' : 'var(--md-sys-color-on-surface-variant)',
+              backgroundColor: isHowToModalOpen ? 'rgba(245, 158, 11, 0.16)' : 'transparent',
+            }}
+            className="p-1.5 rounded-lg hover:opacity-85 transition-all flex items-center justify-center active:scale-90"
+          >
+            <HelpCircle className="w-4 h-4" />
+          </button>
+
           {/* Bookmark Button */}
           <button
             type="button"
@@ -1082,6 +1129,20 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         difficulty={game.difficulty}
         isBookmarked={isBookmarked}
         onToggleBookmark={handleToggleBookmark}
+        onOpenHowToGuide={() => {
+          setIsPauseModalOpen(false);
+          setIsHowToModalOpen(true);
+        }}
+      />
+
+      {/* Step-by-Step How-To Notes & Candidate Guide Modal */}
+      <HowToPlayModal
+        isOpen={isHowToModalOpen}
+        onClose={handleCloseHowToModal}
+        soundEnabled={settings.soundEnabled}
+        hapticsEnabled={settings.hapticsEnabled}
+        inputMode={settings.inputMode}
+        customColors={settings.customColors}
       />
 
       {/* Number Celebration Parade with Firecrackers & Ascending 1-9 Flight */}
