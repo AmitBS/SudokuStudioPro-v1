@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../../theme/themeContext';
 import { SudokuInputMode } from '../../types/sudoku';
 import { SudokuValueDisplay, getSymbolAriaLabel } from '../../utils/sudokuSymbols';
 import { Undo2, Eraser, Pencil, Pen, Lightbulb, Compass } from 'lucide-react';
+import { playClickSound, playSuccessSound, triggerHaptic } from '../../utils/audio';
 
 interface SudokuControlsProps {
   onNumberClick: (num: number) => void;
@@ -19,6 +20,8 @@ interface SudokuControlsProps {
   completedParadeNumbers?: number[];
   inputMode?: SudokuInputMode;
   customColors?: Record<number, string>;
+  selectedNoteValue?: number | null;
+  onSelectNoteValue?: (num: number | null) => void;
 }
 
 export const SudokuControls: React.FC<SudokuControlsProps> = ({
@@ -36,8 +39,90 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
   completedParadeNumbers = [],
   inputMode = 'numbers',
   customColors,
+  selectedNoteValue = null,
+  onSelectNoteValue,
 }) => {
   const { isDark, activePrimary } = useTheme();
+
+  // Long-press detection on numpad buttons while in Pencil Mode
+  const longPressTimerRef = useRef<number | null>(null);
+  const longPressTriggeredRef = useRef<boolean>(false);
+  const pressStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  const pressingNumRef = useRef<number | null>(null);
+  const [pressingNum, setPressingNum] = useState<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current !== null) {
+        window.clearTimeout(longPressTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handlePointerDown = (num: number, e: React.PointerEvent<HTMLButtonElement>) => {
+    if (disabled) return;
+    if (!isNotesMode) return;
+
+    if (longPressTimerRef.current !== null) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    longPressTriggeredRef.current = false;
+    pressingNumRef.current = num;
+    setPressingNum(num);
+    pressStartPosRef.current = { x: e.clientX, y: e.clientY };
+
+    longPressTimerRef.current = window.setTimeout(() => {
+      longPressTriggeredRef.current = true;
+      setPressingNum(null);
+      if (onSelectNoteValue) {
+        onSelectNoteValue(num);
+        playSuccessSound(true);
+        triggerHaptic('success');
+      }
+    }, 450);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (pressStartPosRef.current && pressingNumRef.current !== null) {
+      const dx = Math.abs(e.clientX - pressStartPosRef.current.x);
+      const dy = Math.abs(e.clientY - pressStartPosRef.current.y);
+      if (dx > 12 || dy > 12) {
+        if (longPressTimerRef.current !== null) {
+          window.clearTimeout(longPressTimerRef.current);
+          longPressTimerRef.current = null;
+        }
+        setPressingNum(null);
+        pressingNumRef.current = null;
+      }
+    }
+  };
+
+  const handlePointerUp = () => {
+    if (longPressTimerRef.current !== null) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    setPressingNum(null);
+    pressingNumRef.current = null;
+  };
+
+  const handleClick = (num: number) => {
+    if (longPressTriggeredRef.current) {
+      longPressTriggeredRef.current = false;
+      return;
+    }
+    // If the user taps the same highlighted value again, restore its background color to normal state and deselect it
+    if (isNotesMode && selectedNoteValue === num) {
+      if (onSelectNoteValue) {
+        onSelectNoteValue(null);
+        playClickSound(true);
+        triggerHaptic('light');
+      }
+      return;
+    }
+    onNumberClick(num);
+  };
 
   return (
     <div className="w-full max-w-[480px] mx-auto space-y-3.5">
@@ -225,60 +310,91 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
 
         {/* Contextual Status Tip */}
         <div
-          className="text-center text-[11px] font-medium transition-colors"
+          className="text-center text-[11px] font-medium transition-colors min-h-[1.25rem] flex items-center justify-center"
           style={{
             color: isNotesMode ? '#D97706' : 'var(--md-sys-color-on-surface-variant)',
           }}
         >
-          {isNotesMode ? (
+          {isNotesMode && selectedNoteValue !== null ? (
+            <span className="inline-flex items-center gap-1.5 animate-in fade-in font-semibold text-amber-700 dark:text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/30">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+              <span>
+                <strong>Note Selected:</strong> Tap empty cells to enter or remove note. Tap highlighted value again to deselect.
+              </span>
+            </span>
+          ) : isNotesMode ? (
             <span className="inline-flex items-center gap-1.5 animate-in fade-in">
-              <Pencil className="w-3 h-3 text-amber-500" />
-              <span><strong>Pencil Mode Active:</strong> Numbers will add or remove candidate notes in the selected cell (Press P to toggle)</span>
+              <Pencil className="w-3 h-3 text-amber-500 shrink-0" />
+              <span><strong>Pencil Mode:</strong> Tap cell to add notes, or <strong>long-press</strong> any number below to select & stamp</span>
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5">
-              <Pen className="w-3 h-3 opacity-60" />
+              <Pen className="w-3 h-3 opacity-60 shrink-0" />
               <span><strong>Normal Mode:</strong> Numbers will place final values into the selected cell</span>
             </span>
           )}
         </div>
       </div>
 
-      {/* Number Pad 1-9 */}
+      {/* Number Pad 1-9 with Long-Press Note Selection & Background Highlighting */}
       <div className="grid grid-cols-9 gap-1 sm:gap-2">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => {
           const placedCount = digitCounts[num] || 0;
           const isCompleted = placedCount >= 9;
           const isCelebrating = celebratingNumber === num;
           const isParadeCompleted = completedParadeNumbers.includes(num);
+          const isSelected = isNotesMode && selectedNoteValue === num;
+          const isPressing = isNotesMode && pressingNum === num && !isSelected;
 
           // In Pencil mode, allow tapping any number to draft candidate notes even if 9 are completed
           const isDisabled = !isNotesMode && isCompleted && !isCelebrating && !isParadeCompleted;
+
+          const buttonTitle = isNotesMode
+            ? isSelected
+              ? `Note ${num} selected. Tap empty cells to add or remove note. Tap to deselect.`
+              : `Long-press ${num} to select note for quick cell placement.`
+            : `Place value ${num}`;
 
           return (
             <button
               key={num}
               id={`numpad-btn-${num}`}
               type="button"
-              aria-label={`${getSymbolAriaLabel(num, inputMode, customColors)}${isNotesMode ? ' as candidate note' : ''}`}
+              aria-label={`${getSymbolAriaLabel(num, inputMode, customColors)}${isNotesMode ? ' candidate note' : ''}${isSelected ? ' (selected note)' : ''}`}
+              aria-pressed={isSelected}
               disabled={isDisabled || disabled}
-              onClick={() => onNumberClick(num)}
+              title={buttonTitle}
+              onPointerDown={(e) => handlePointerDown(num, e)}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
+              onContextMenu={(e) => {
+                if (isNotesMode) e.preventDefault();
+              }}
+              onClick={() => handleClick(num)}
               style={{
-                backgroundColor: isCelebrating || isParadeCompleted
+                backgroundColor: isSelected
+                  ? '#F59E0B'
+                  : isCelebrating || isParadeCompleted
                   ? 'var(--md-sys-color-primary)'
                   : isNotesMode
                   ? isDark ? 'rgba(245, 158, 11, 0.12)' : 'rgba(254, 243, 199, 0.5)'
                   : isCompleted
                   ? 'var(--md-sys-color-surface-container-high)'
                   : 'var(--md-sys-color-surface)',
-                borderColor: isCelebrating || isParadeCompleted
+                borderColor: isSelected
+                  ? '#B45309'
+                  : isCelebrating || isParadeCompleted
                   ? 'var(--md-sys-color-primary)'
                   : isNotesMode
                   ? '#F59E0B'
                   : 'var(--md-sys-color-outline-variant)',
+                borderWidth: isSelected ? '2px' : '1px',
               }}
-              className={`relative flex flex-col items-center justify-center py-2 sm:py-2.5 rounded-xl border transition-all active:scale-95 select-none ${
-                isCelebrating
+              className={`relative flex flex-col items-center justify-center py-2 sm:py-2.5 rounded-xl border transition-all active:scale-95 select-none touch-manipulation ${
+                isSelected
+                  ? 'ring-4 ring-amber-500/60 shadow-lg shadow-amber-500/35 scale-105 z-10 font-extrabold'
+                  : isCelebrating
                   ? 'scale-115 ring-4 ring-primary/50 shadow-lg shadow-primary/40 z-20 animate-pulse'
                   : isParadeCompleted
                   ? 'ring-2 ring-primary/40 shadow-sm'
@@ -287,21 +403,30 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
                   : isNotesMode
                   ? 'hover:ring-1 hover:ring-amber-500 shadow-xs'
                   : 'hover:opacity-90 shadow-xs'
-              }`}
+              } ${isPressing ? 'scale-95 ring-2 ring-amber-500/50' : ''}`}
             >
-              {/* Subtle pencil corner indicator on numpad buttons during Pencil Mode */}
-              {isNotesMode && (
+              {/* Corner badge indicating selected note stamping or standard pencil mode */}
+              {isSelected ? (
                 <span
-                  className="absolute top-0.5 right-1 text-[8px] font-bold text-amber-500 select-none"
+                  className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-white text-amber-600 flex items-center justify-center text-[9px] font-black shadow-md ring-1 ring-amber-500 animate-in zoom-in-75 duration-150 select-none pointer-events-none"
                   aria-hidden="true"
                 >
                   ✎
                 </span>
-              )}
+              ) : isNotesMode ? (
+                <span
+                  className="absolute top-0.5 right-1 text-[8px] font-bold text-amber-500 select-none pointer-events-none"
+                  aria-hidden="true"
+                >
+                  ✎
+                </span>
+              ) : null}
 
               <span
                 style={{
-                  color: isCelebrating || isParadeCompleted
+                  color: isSelected
+                    ? '#FFFFFF'
+                    : isCelebrating || isParadeCompleted
                     ? 'var(--md-sys-color-on-primary)'
                     : isNotesMode
                     ? isDark ? '#FCD34D' : '#B45309'
@@ -309,15 +434,21 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
                     ? 'var(--md-sys-color-on-surface-variant)'
                     : 'var(--md-sys-color-on-surface)',
                 }}
-                className="text-lg sm:text-xl font-bold font-mono flex items-center justify-center h-6 sm:h-7"
+                className={`text-lg sm:text-xl font-bold font-mono flex items-center justify-center h-6 sm:h-7 ${
+                  isSelected ? 'drop-shadow-sm font-extrabold' : ''
+                }`}
               >
                 <SudokuValueDisplay value={num} inputMode={inputMode} customColors={customColors} size="md" />
               </span>
               <span
                 style={{
-                  color: isNotesMode ? '#D97706' : 'var(--md-sys-color-on-surface-variant)',
+                  color: isSelected
+                    ? '#FFFFFF'
+                    : isNotesMode
+                    ? '#D97706'
+                    : 'var(--md-sys-color-on-surface-variant)',
                 }}
-                className="text-[10px] font-mono leading-none mt-0.5 font-medium"
+                className={`text-[10px] font-mono leading-none mt-0.5 ${isSelected ? 'font-bold' : 'font-medium'}`}
               >
                 {9 - placedCount}
               </span>

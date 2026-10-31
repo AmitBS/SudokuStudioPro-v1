@@ -56,3 +56,11 @@ Implemented a full-featured 'Saved Puzzles' management and bookmarking system al
 - **Step 4: Pro Gestures & Deductive AI Tutor**: Details the 2-second hold quick-notes popover and the "Ask Logic" Deductive Tutor for next-step reasoning.
 - **Accessible & Re-launchable**: Easily re-opened at any time from the GameScreen header (`HelpCircle`), the Pause menu, or the Settings Screen tutorial launcher.
 
+## Select Notes Values Using Background Highlighting (`SudokuControls.tsx` & `SudokuBoard.tsx`)
+- **Long-Press Value Selection**: In Pencil Mode (`isNotesMode`), holding any value box (1–9) for 450ms locks it into the selected state with haptic and audio feedback.
+- **Vibrant Background Highlighting**: Selected value box changes to a solid `#F59E0B` amber background with 2px `#B45309` border, `ring-4 ring-amber-500/60 shadow-lg scale-105`, high-contrast white text/symbol, and top-right `✎` badge.
+- **Four Display Modes Parity**: Consistently supported across Number, Symbol, Color, and Fruit display modes.
+- **Continuous Empty Cell Tapping**: With a note value selected, tapping any empty cell on the 9x9 board enters that value as a note, or removes it if already present ("or vice-versa"), with undo tracking and audio/haptic responses.
+- **Tap-to-Deselect**: Tapping the same highlighted value box restores its background to normal and cancels the note-stamping state. Also resets on Pencil Mode toggle, pause, game over, or Escape key.
+
+

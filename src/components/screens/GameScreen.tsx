@@ -69,6 +69,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>({ row: 0, col: 0 });
   const [completedHighlightCells, setCompletedHighlightCells] = useState<CompletedHighlightCell[]>([]);
   const [isNotesMode, setIsNotesMode] = useState<boolean>(false);
+  const [selectedNoteValue, setSelectedNoteValue] = useState<number | null>(null);
   const [activeLogicStep, setActiveLogicStep] = useState<LogicStep | null>(null);
   const [isLogicModalOpen, setIsLogicModalOpen] = useState<boolean>(false);
   const [isPauseModalOpen, setIsPauseModalOpen] = useState<boolean>(false);
@@ -721,11 +722,21 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   const handleToggleNotesMode = useCallback(() => {
     setIsNotesMode(prev => {
       const next = !prev;
+      if (!next) {
+        setSelectedNoteValue(null);
+      }
       playNoteEntrySound(settings.soundEnabled, !next);
       triggerHaptic('note', settings.hapticsEnabled);
       return next;
     });
   }, [settings.soundEnabled, settings.hapticsEnabled]);
+
+  // Clean up selected note value when pencil mode is off, game is paused, completed, or game over
+  useEffect(() => {
+    if (!isNotesMode || game.isPaused || game.isCompleted || game.isGameOver) {
+      setSelectedNoteValue(null);
+    }
+  }, [isNotesMode, game.isPaused, game.isCompleted, game.isGameOver]);
 
   // Keyboard navigation & inputs
   useEffect(() => {
@@ -753,14 +764,18 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       } else if (e.key.toLowerCase() === 'l') {
         handleAskLogic();
       } else if (e.key === 'Escape') {
-        onUpdateGame(prev => ({ ...prev, isPaused: !prev.isPaused }));
-        setIsPauseModalOpen(prev => !prev);
+        if (selectedNoteValue !== null) {
+          setSelectedNoteValue(null);
+        } else {
+          onUpdateGame(prev => ({ ...prev, isPaused: !prev.isPaused }));
+          setIsPauseModalOpen(prev => !prev);
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleNumberInput, handleErase, handleUndo, handleToggleNotesMode, selectedCell, isPauseModalOpen, isLogicModalOpen, showConfirmQuit, onUpdateGame]);
+  }, [handleNumberInput, handleErase, handleUndo, handleToggleNotesMode, selectedCell, isPauseModalOpen, isLogicModalOpen, showConfirmQuit, onUpdateGame, selectedNoteValue]);
 
   const handleBackToHome = () => {
     if (settings.confirmNewGame && !game.isCompleted && !game.isGameOver) {
@@ -967,6 +982,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         isPaused={game.isPaused}
         celebratingNumber={celebratingNumber}
         completedParadeNumbers={completedParadeNumbers}
+        selectedNoteValue={selectedNoteValue}
+        isNotesMode={isNotesMode}
       />
 
       {/* CONTROLS & NUMPAD */}
@@ -985,6 +1002,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         completedParadeNumbers={completedParadeNumbers}
         inputMode={settings.inputMode}
         customColors={settings.customColors}
+        selectedNoteValue={selectedNoteValue}
+        onSelectNoteValue={setSelectedNoteValue}
       />
 
       {/* Game Over Modal (Mistakes Limit Reached) */}

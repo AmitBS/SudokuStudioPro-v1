@@ -525,6 +525,27 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({
                 }}
               >
                 <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-xl bg-amber-500/15 text-amber-500 shrink-0">
+                    <Pencil className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4
+                      className="text-xs font-bold text-amber-600 dark:text-amber-400"
+                    >
+                      Long-Press Keypad: Quick Note Stamping
+                    </h4>
+                    <p
+                      className="text-xs mt-0.5 leading-relaxed"
+                      style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
+                    >
+                      In Pencil Mode, <strong>long-press any value</strong> in the selection panel to highlight its background. Then tap any empty cells on the board to rapidly enter or remove that note! Tap the highlighted button again to deselect.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="h-px bg-black/5 dark:bg-white/10" />
+
+                <div className="flex items-start gap-3">
                   <div className="p-2 rounded-xl bg-purple-500/15 text-purple-500 shrink-0">
                     <Timer className="w-4 h-4" />
                   </div>

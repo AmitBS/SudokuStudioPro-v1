@@ -17,6 +17,8 @@ interface SudokuBoardProps {
   isPaused?: boolean;
   celebratingNumber?: number | null;
   completedParadeNumbers?: number[];
+  selectedNoteValue?: number | null;
+  isNotesMode?: boolean;
 }
 
 export const SudokuBoard: React.FC<SudokuBoardProps> = ({
@@ -31,6 +33,8 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
   isPaused = false,
   celebratingNumber = null,
   completedParadeNumbers = [],
+  selectedNoteValue = null,
+  isNotesMode = false,
 }) => {
   const { tokens } = useTheme();
 
@@ -46,6 +50,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
   const longPressTimerRef = useRef<number | null>(null);
   const pressStartPosRef = useRef<{ x: number; y: number } | null>(null);
   const longPressTriggeredRef = useRef<boolean>(false);
+  const isPointerMovedRef = useRef<boolean>(false);
 
   // Clear timer helper
   const cancelLongPress = useCallback(() => {
@@ -205,11 +210,12 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                 disabled={isPaused}
                 onPointerDown={(e) => {
                   if (isPaused) return;
+                  isPointerMovedRef.current = false;
                   // Immediately update selected cell to pressed cell so visual highlight appears instantaneously
                   onSelectCell(r, c);
 
-                  // Only trigger 0.5-second (500ms) long-press on empty cells
-                  if (cell.value === 0) {
+                  // Only trigger 0.5-second (500ms) long-press on empty cells when NOT in note-stamping mode
+                  if (cell.value === 0 && (!selectedNoteValue || !isNotesMode)) {
                     longPressTriggeredRef.current = false;
                     pressStartPosRef.current = { x: e.clientX, y: e.clientY };
                     const targetBtn = e.currentTarget;
@@ -234,10 +240,11 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                   }
                 }}
                 onPointerMove={(e) => {
-                  if (pressStartPosRef.current && isBeingPressed) {
+                  if (pressStartPosRef.current) {
                     const dx = Math.abs(e.clientX - pressStartPosRef.current.x);
                     const dy = Math.abs(e.clientY - pressStartPosRef.current.y);
                     if (dx > 10 || dy > 10) {
+                      isPointerMovedRef.current = true;
                       cancelLongPress();
                     }
                   }
@@ -251,8 +258,20 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                 }}
                 onPointerCancel={cancelLongPress}
                 onClick={() => {
-                  if (!longPressTriggeredRef.current) {
+                  if (!longPressTriggeredRef.current && !isPointerMovedRef.current) {
                     onSelectCell(r, c);
+
+                    // When a note value is selected in Pencil Mode, tap any empty cell to enter note or vice-versa
+                    if (
+                      selectedNoteValue !== null &&
+                      selectedNoteValue !== undefined &&
+                      isNotesMode &&
+                      cell.value === 0 &&
+                      !cell.given &&
+                      onToggleCellNote
+                    ) {
+                      onToggleCellNote(r, c, selectedNoteValue);
+                    }
                   }
                 }}
                 style={{
@@ -268,6 +287,10 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                   logicType === 'focus' ? 'ring-2 ring-inset ring-amber-500 z-10' : ''
                 } ${
                   isBeingPressed ? 'ring-2 ring-inset ring-primary z-20' : ''
+                } ${
+                  selectedNoteValue !== null && isNotesMode && cell.value === 0 && !cell.given
+                    ? 'cursor-pointer hover:ring-1 hover:ring-amber-500/50'
+                    : ''
                 }`}
               >
                 {/* 0.5-Second Circular Progress Indicator */}
