@@ -125,9 +125,9 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
   };
 
   return (
-    <div className="w-full max-w-[480px] mx-auto space-y-3.5">
+    <div className="w-full max-w-[480px] mx-auto space-y-2 sm:space-y-3">
       {/* Action Toolbar */}
-      <div className="grid grid-cols-5 gap-2 text-center select-none">
+      <div className="grid grid-cols-5 gap-1.5 sm:gap-2 text-center select-none">
         {/* Undo */}
         <button
           type="button"
@@ -142,13 +142,13 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
               ? 'var(--md-sys-color-on-surface)'
               : 'var(--md-sys-color-on-surface-variant)',
           }}
-          className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all ${
+          className={`flex flex-col items-center justify-center h-[44px] sm:h-[50px] px-1 py-1 rounded-xl border transition-all ${
             canUndo && !disabled ? 'active:scale-95 hover:opacity-90' : 'opacity-40 cursor-not-allowed'
           }`}
           title="Undo last move (U or Backspace)"
         >
-          <Undo2 className="w-5 h-5 mb-1" />
-          <span className="text-[11px] font-semibold">Undo</span>
+          <Undo2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 mb-0.5" />
+          <span className="text-[10px] sm:text-[11px] font-semibold leading-tight">Undo</span>
         </button>
 
         {/* Erase */}
@@ -161,11 +161,11 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
             borderColor: 'var(--md-sys-color-outline-variant)',
             color: 'var(--md-sys-color-on-surface)',
           }}
-          className="flex flex-col items-center justify-center p-2 rounded-xl border hover:opacity-90 active:scale-95 transition-all"
+          className="flex flex-col items-center justify-center h-[44px] sm:h-[50px] px-1 py-1 rounded-xl border hover:opacity-90 active:scale-95 transition-all"
           title="Erase cell value or notes (Backspace)"
         >
-          <Eraser className="w-5 h-5 mb-1 text-rose-500" />
-          <span className="text-[11px] font-semibold">Erase</span>
+          <Eraser className="w-4 h-4 sm:w-4.5 sm:h-4.5 mb-0.5 text-rose-500" />
+          <span className="text-[10px] sm:text-[11px] font-semibold leading-tight">Erase</span>
         </button>
 
         {/* Pencil Mode Toggle Action Button */}
@@ -186,20 +186,20 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
               ? '#D97706'
               : 'var(--md-sys-color-on-surface)',
           }}
-          className={`relative flex flex-col items-center justify-center p-2 rounded-xl border transition-all ${
-            isNotesMode ? 'shadow-sm ring-2 ring-amber-500/30 font-bold' : 'hover:opacity-90 active:scale-95'
+          className={`relative flex flex-col items-center justify-center h-[44px] sm:h-[50px] px-1 py-1 rounded-xl border transition-all ${
+            isNotesMode ? 'shadow-xs ring-2 ring-amber-500/30 font-bold' : 'hover:opacity-90 active:scale-95'
           }`}
         >
-          <div className="relative mb-1">
-            <Pencil className={`w-5 h-5 transition-transform ${isNotesMode ? 'scale-110 text-amber-500' : ''}`} />
+          <div className="relative mb-0.5 flex items-center justify-center">
+            <Pencil className={`w-4 h-4 sm:w-4.5 sm:h-4.5 transition-transform ${isNotesMode ? 'scale-105 text-amber-500' : ''}`} />
             {isNotesMode && (
-              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white animate-pulse" />
+              <span className="absolute -top-0.5 -right-1 w-1.5 h-1.5 rounded-full bg-amber-500 ring-1 ring-white animate-pulse" />
             )}
           </div>
-          <span className="text-[11px] font-semibold flex items-center gap-0.5">
+          <span className="text-[10px] sm:text-[11px] font-semibold flex items-center gap-0.5 leading-tight">
             <span>Pencil</span>
             <span
-              className={`text-[9px] px-1 py-0.2 rounded font-mono font-bold ${
+              className={`text-[8.5px] px-1 py-0 rounded font-mono font-bold leading-none ${
                 isNotesMode ? 'bg-amber-500 text-white' : 'bg-black/5 dark:bg-white/10 text-muted'
               }`}
             >
@@ -218,11 +218,11 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
             borderColor: 'var(--md-sys-color-outline-variant)',
             color: 'var(--md-sys-color-on-surface)',
           }}
-          className="flex flex-col items-center justify-center p-2 rounded-xl border hover:opacity-90 active:scale-95 transition-all"
+          className="flex flex-col items-center justify-center h-[44px] sm:h-[50px] px-1 py-1 rounded-xl border hover:opacity-90 active:scale-95 transition-all"
           title="Direct clue hint (H)"
         >
-          <Lightbulb className="w-5 h-5 mb-1 text-amber-500" />
-          <span className="text-[11px] font-semibold">Hint</span>
+          <Lightbulb className="w-4 h-4 sm:w-4.5 sm:h-4.5 mb-0.5 text-amber-500" />
+          <span className="text-[10px] sm:text-[11px] font-semibold leading-tight">Hint</span>
         </button>
 
         {/* Ask Logic */}
@@ -235,18 +235,18 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
             borderColor: 'var(--md-sys-color-outline-variant)',
             color: 'var(--md-sys-color-on-surface)',
           }}
-          className="flex flex-col items-center justify-center p-2 rounded-xl border hover:opacity-90 active:scale-95 transition-all"
+          className="flex flex-col items-center justify-center h-[44px] sm:h-[50px] px-1 py-1 rounded-xl border hover:opacity-90 active:scale-95 transition-all"
           title="Deductive Tutor Logic Step (L)"
         >
-          <Compass className="w-5 h-5 mb-1 text-indigo-500" />
-          <span className="text-[11px] font-semibold">Ask Logic</span>
+          <Compass className="w-4 h-4 sm:w-4.5 sm:h-4.5 mb-0.5 text-indigo-500" />
+          <span className="text-[10px] sm:text-[11px] font-semibold leading-tight">Ask Logic</span>
         </button>
       </div>
 
       {/* Prominent Segmented Pencil Mode Switcher */}
-      <div className="space-y-1.5">
+      <div className="space-y-1">
         <div
-          className="flex items-center p-1 rounded-2xl border shadow-xs max-w-md mx-auto"
+          className="flex items-center p-0.5 sm:p-1 rounded-xl sm:rounded-2xl border shadow-xs max-w-md mx-auto"
           style={{
             backgroundColor: 'var(--md-sys-color-surface-container-high)',
             borderColor: 'var(--md-sys-color-outline-variant)',
@@ -263,7 +263,7 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
             onClick={() => {
               if (isNotesMode) onToggleNotesMode();
             }}
-            className={`flex-1 py-1.5 sm:py-2 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+            className={`flex-1 h-7 sm:h-8.5 px-2 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
               !isNotesMode
                 ? 'shadow-xs active:scale-98'
                 : 'hover:opacity-75 opacity-70'
@@ -274,7 +274,7 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
               border: !isNotesMode ? '1px solid var(--md-sys-color-outline-variant)' : '1px solid transparent',
             }}
           >
-            <Pen className="w-3.5 h-3.5 shrink-0" />
+            <Pen className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
             <span>Normal (Place Number)</span>
           </button>
 
@@ -287,9 +287,9 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
             onClick={() => {
               if (!isNotesMode) onToggleNotesMode();
             }}
-            className={`flex-1 py-1.5 sm:py-2 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+            className={`flex-1 h-7 sm:h-8.5 px-2 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
               isNotesMode
-                ? 'shadow-sm active:scale-98 ring-2 ring-amber-500/40'
+                ? 'shadow-xs active:scale-98 ring-2 ring-amber-500/40'
                 : 'hover:opacity-75 opacity-70'
             }`}
             style={{
@@ -298,38 +298,38 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
               border: isNotesMode ? '1px solid #D97706' : '1px solid transparent',
             }}
           >
-            <Pencil className="w-3.5 h-3.5 shrink-0" />
-            <span className="flex items-center gap-1.5">
+            <Pencil className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+            <span className="flex items-center gap-1">
               <span>Pencil Mode (Notes)</span>
               {isNotesMode && (
-                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
               )}
             </span>
           </button>
         </div>
 
-        {/* Contextual Status Tip */}
+        {/* Contextual Status Tip - Reduced font size and height */}
         <div
-          className="text-center text-[11px] font-medium transition-colors min-h-[1.25rem] flex items-center justify-center"
+          className="text-center text-[10px] sm:text-[11px] font-medium leading-tight transition-colors min-h-[1.125rem] flex items-center justify-center px-1"
           style={{
             color: isNotesMode ? '#D97706' : 'var(--md-sys-color-on-surface-variant)',
           }}
         >
           {isNotesMode && selectedNoteValue !== null ? (
-            <span className="inline-flex items-center gap-1.5 animate-in fade-in font-semibold text-amber-700 dark:text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/30">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+            <span className="inline-flex items-center gap-1.5 animate-in fade-in font-semibold text-amber-700 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30 text-[9.5px] sm:text-[10.5px]">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
               <span>
                 <strong>Note Selected:</strong> Tap empty cells to enter or remove note. Tap highlighted value again to deselect.
               </span>
             </span>
           ) : isNotesMode ? (
-            <span className="inline-flex items-center gap-1.5 animate-in fade-in">
-              <Pencil className="w-3 h-3 text-amber-500 shrink-0" />
+            <span className="inline-flex items-center gap-1 animate-in fade-in">
+              <Pencil className="w-2.5 h-2.5 text-amber-500 shrink-0" />
               <span><strong>Pencil Mode:</strong> Tap cell to add notes, or <strong>long-press</strong> any number below to select & stamp</span>
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5">
-              <Pen className="w-3 h-3 opacity-60 shrink-0" />
+            <span className="inline-flex items-center gap-1">
+              <Pen className="w-2.5 h-2.5 opacity-60 shrink-0" />
               <span><strong>Normal Mode:</strong> Numbers will place final values into the selected cell</span>
             </span>
           )}
@@ -391,7 +391,7 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
                   : 'var(--md-sys-color-outline-variant)',
                 borderWidth: isSelected ? '2px' : '1px',
               }}
-              className={`relative flex flex-col items-center justify-center py-2 sm:py-2.5 rounded-xl border transition-all active:scale-95 select-none touch-manipulation ${
+              className={`relative flex flex-col items-center justify-center py-1.5 sm:py-2 h-[48px] sm:h-[56px] rounded-xl border transition-all active:scale-95 select-none touch-manipulation ${
                 isSelected
                   ? 'ring-4 ring-amber-500/60 shadow-lg shadow-amber-500/35 scale-105 z-10 font-extrabold'
                   : isCelebrating
@@ -434,7 +434,7 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
                     ? 'var(--md-sys-color-on-surface-variant)'
                     : 'var(--md-sys-color-on-surface)',
                 }}
-                className={`text-lg sm:text-xl font-bold font-mono flex items-center justify-center h-6 sm:h-7 ${
+                className={`text-base sm:text-xl font-bold font-mono flex items-center justify-center h-5 sm:h-7 ${
                   isSelected ? 'drop-shadow-sm font-extrabold' : ''
                 }`}
               >
@@ -448,7 +448,7 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
                     ? '#D97706'
                     : 'var(--md-sys-color-on-surface-variant)',
                 }}
-                className={`text-[10px] font-mono leading-none mt-0.5 ${isSelected ? 'font-bold' : 'font-medium'}`}
+                className={`text-[9px] sm:text-[10px] font-mono leading-none mt-0.5 ${isSelected ? 'font-bold' : 'font-medium'}`}
               >
                 {9 - placedCount}
               </span>

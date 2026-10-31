@@ -790,10 +790,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   const timeFormatted = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
   return (
-    <div className="w-full max-w-lg mx-auto px-4 py-4 sm:py-6 space-y-4 animate-in fade-in duration-150">
+    <div className="w-full max-w-lg mx-auto px-3 sm:px-4 py-2 sm:py-5 space-y-2 sm:space-y-3.5 animate-in fade-in duration-150">
       {/* Game Header HUD */}
       <div
-        className="flex items-center justify-between gap-2 pb-3 border-b"
+        className="flex items-center justify-between gap-2 pb-2 sm:pb-3 border-b"
         style={{ borderColor: 'var(--md-sys-color-outline-variant)' }}
       >
         <button
@@ -915,7 +915,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       {/* PUZZLE COMPLETION PROGRESS BAR (Toggled in Settings) */}
       {showProgressBar && (
         <div
-          className="w-full space-y-1.5 animate-in fade-in duration-200"
+          className="w-full space-y-1 animate-in fade-in duration-200"
           id="sudoku-progress-bar-container"
         >
           <div className="flex items-center justify-between text-xs font-semibold px-0.5">
@@ -946,7 +946,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           </div>
 
           <div
-            className="w-full h-2 sm:h-2.5 rounded-full overflow-hidden p-0.5 border shadow-inner"
+            className="w-full h-1.5 sm:h-2 rounded-full overflow-hidden p-0.5 border shadow-inner"
             style={{
               backgroundColor: 'var(--md-sys-color-surface-container-high)',
               borderColor: 'var(--md-sys-color-outline-variant)',
