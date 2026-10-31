@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Difficulty, GameHistoryItem, Screen } from '../../types/sudoku';
 import { useTheme } from '../../theme/themeContext';
 import { ArrowLeft, Clock, BookmarkCheck } from 'lucide-react';
+import { DifficultyBadge, getDifficultyConfig } from '../common/DifficultyBadge';
 
 interface HistoryScreenProps {
   history: GameHistoryItem[];
@@ -56,6 +57,8 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
         {['all', 'easy', 'medium', 'hard', 'expert'].map(tab => {
           const isSelected = filterDifficulty === tab;
+          const diffConfig = tab !== 'all' ? getDifficultyConfig(tab) : null;
+
           return (
             <button
               key={tab}
@@ -69,9 +72,15 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({
                   ? 'var(--md-sys-color-on-primary)'
                   : 'var(--md-sys-color-on-surface-variant)',
               }}
-              className="px-3 py-1.5 rounded-lg font-bold capitalize transition-colors whitespace-nowrap shadow-xs hover:opacity-85"
+              className="px-3 py-1.5 rounded-lg font-bold capitalize transition-colors whitespace-nowrap shadow-xs hover:opacity-85 flex items-center gap-1.5"
             >
-              {tab}
+              {diffConfig && (
+                <span
+                  className="w-2 h-2 rounded-full shrink-0 shadow-2xs"
+                  style={{ backgroundColor: diffConfig.dotColor }}
+                />
+              )}
+              <span>{tab}</span>
             </button>
           );
         })}
@@ -106,6 +115,7 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({
             const minutes = Math.floor(item.durationSeconds / 60);
             const seconds = item.durationSeconds % 60;
             const timeFormatted = `${minutes}m ${seconds}s`;
+            const diffConfig = getDifficultyConfig(item.difficulty);
 
             return (
               <div
@@ -113,25 +123,28 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({
                 style={{
                   backgroundColor: 'var(--md-sys-color-surface)',
                   borderColor: 'var(--md-sys-color-outline-variant)',
+                  borderLeftColor: diffConfig.accentBorder,
+                  borderLeftWidth: '4px',
                 }}
-                className="p-4 rounded-xl border shadow-xs flex items-center justify-between gap-4"
+                className="p-4 rounded-xl border shadow-xs flex items-center justify-between gap-4 transition-all hover:shadow-sm"
               >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="text-xs font-bold uppercase tracking-wider capitalize"
-                      style={{ color: 'var(--md-sys-color-on-surface)' }}
-                    >
-                      {item.difficulty}
-                    </span>
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Visual Indicator: Color-coded Difficulty Badge */}
+                    <DifficultyBadge
+                      difficulty={item.difficulty}
+                      size="sm"
+                      showIndicatorDot
+                      showLevelBars
+                    />
                     {item.isDaily && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/30">
                         Daily
                       </span>
                     )}
                     <span style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>·</span>
                     <span
-                      className="text-xs"
+                      className="text-xs font-medium"
                       style={{ color: 'var(--md-sys-color-on-surface-variant)' }}
                     >
                       {item.date}

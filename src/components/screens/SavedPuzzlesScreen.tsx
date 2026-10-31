@@ -20,6 +20,7 @@ import {
   removeSavedPuzzle,
   renameSavedPuzzle,
 } from '../../utils/savedPuzzles';
+import { DifficultyBadge, getDifficultyConfig } from '../common/DifficultyBadge';
 
 interface SavedPuzzlesScreenProps {
   onLoadSavedPuzzle: (puzzle: SavedPuzzle) => void;
@@ -180,6 +181,7 @@ export const SavedPuzzlesScreen: React.FC<SavedPuzzlesScreenProps> = ({
           const isSelected = selectedDifficulty === tab;
           const count =
             tab === 'all' ? puzzles.length : puzzles.filter(p => p.difficulty === tab).length;
+          const diffConfig = tab !== 'all' ? getDifficultyConfig(tab) : null;
 
           return (
             <button
@@ -196,6 +198,12 @@ export const SavedPuzzlesScreen: React.FC<SavedPuzzlesScreenProps> = ({
               }}
               className="px-3.5 py-1.5 rounded-full font-bold capitalize transition-all shrink-0 hover:opacity-90 flex items-center gap-1.5"
             >
+              {diffConfig && (
+                <span
+                  className="w-2 h-2 rounded-full shrink-0 shadow-2xs"
+                  style={{ backgroundColor: diffConfig.dotColor }}
+                />
+              )}
               <span>{tab}</span>
               <span
                 className="text-[10px] px-1.5 py-0.2 rounded-full font-mono"
@@ -277,7 +285,7 @@ export const SavedPuzzlesScreen: React.FC<SavedPuzzlesScreenProps> = ({
         /* SAVED PUZZLE CARDS GRID */
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredPuzzles.map(puzzle => {
-            const diffStyle = DIFFICULTY_STYLES[puzzle.difficulty];
+            const diffConfig = getDifficultyConfig(puzzle.difficulty);
             const isEditing = editingId === puzzle.id;
             const isConfirmingDelete = confirmDeleteId === puzzle.id;
 
@@ -287,25 +295,25 @@ export const SavedPuzzlesScreen: React.FC<SavedPuzzlesScreenProps> = ({
                 className="p-5 rounded-2xl border transition-all duration-200 flex flex-col justify-between gap-4 shadow-xs hover:shadow-md"
                 style={{
                   backgroundColor: 'var(--md-sys-color-surface)',
-                  borderColor: isDark ? diffStyle.border : 'var(--md-sys-color-outline-variant)',
+                  borderColor: isDark ? diffConfig.darkBorder : 'var(--md-sys-color-outline-variant)',
+                  borderLeftColor: diffConfig.accentBorder,
+                  borderLeftWidth: '4px',
                 }}
               >
                 {/* Top card row: Title, Difficulty Badge, & Options */}
                 <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1 flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide"
-                        style={{
-                          backgroundColor: diffStyle.badgeBg,
-                          color: diffStyle.badgeText,
-                        }}
-                      >
-                        {puzzle.difficulty}
-                      </span>
+                  <div className="space-y-1.5 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {/* Visual Indicator: Color-coded Difficulty Badge */}
+                      <DifficultyBadge
+                        difficulty={puzzle.difficulty}
+                        size="sm"
+                        showIndicatorDot
+                        showLevelBars
+                      />
                       {puzzle.isDaily && (
                         <span
-                          className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide"
+                          className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border border-amber-500/30"
                           style={{
                             backgroundColor: 'rgba(234, 179, 8, 0.15)',
                             color: '#EAB308',
