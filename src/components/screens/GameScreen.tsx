@@ -77,6 +77,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   const [isNumberParadeActive, setIsNumberParadeActive] = useState<boolean>(false);
   const [celebratingNumber, setCelebratingNumber] = useState<number | null>(null);
   const [completedParadeNumbers, setCompletedParadeNumbers] = useState<number[]>([]);
+  const [paradeCollectionCounts, setParadeCollectionCounts] = useState<Record<number, number> | undefined>(undefined);
+  const [arrivingBoxPulse, setArrivingBoxPulse] = useState<{ num: number; count: number } | null>(null);
   const [isVictoryModalVisible, setIsVictoryModalVisible] = useState<boolean>(false);
   const [isBookmarked, setIsBookmarked] = useState<boolean>(() => isPuzzleSaved(game.id));
   const [bookmarkToast, setBookmarkToast] = useState<string | null>(null);
@@ -392,6 +394,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         playNumberEntrySound(settings.soundEnabled);
         triggerHaptic('number', settings.hapticsEnabled);
 
+        // Prepare initial collection counts (0/9 for all boxes, default color retained)
+        setParadeCollectionCounts({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 });
+
         // 2. After exactly 1 second, trigger the firecracker celebration & ascending number animation
         setTimeout(() => {
           playCelebrationFanfare(settings.soundEnabled);
@@ -538,11 +543,25 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     setCompletedParadeNumbers([...completed]);
   }, []);
 
+  // Live collection arrival handler: updates counter 0/9 -> 9/9 and triggers box glow pulse
+  const handleOccurrenceArrival = useCallback((num: number, count: number) => {
+    setParadeCollectionCounts(prev => ({
+      ...(prev || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 }),
+      [num]: count,
+    }));
+    setArrivingBoxPulse({ num, count });
+    window.setTimeout(() => {
+      setArrivingBoxPulse(curr => (curr?.num === num && curr?.count === count ? null : curr));
+    }, 380);
+  }, []);
+
   // Handle completion of the ascending 1-9 number celebration parade
   const handleNumberParadeComplete = useCallback(() => {
     setIsNumberParadeActive(false);
     setCelebratingNumber(null);
     setCompletedParadeNumbers([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    setParadeCollectionCounts({ 1: 9, 2: 9, 3: 9, 4: 9, 5: 9, 6: 9, 7: 9, 8: 9, 9: 9 });
+    setArrivingBoxPulse(null);
     setIsVictoryModalVisible(true);
     launchVictoryConfetti();
 
@@ -561,6 +580,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       setIsNumberParadeActive(false);
       setCelebratingNumber(null);
       setCompletedParadeNumbers([]);
+      setParadeCollectionCounts(undefined);
+      setArrivingBoxPulse(null);
       stopVictoryConfetti();
     }
     return () => {
@@ -658,6 +679,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       onUpdateGame(() => boardWithFinalHint);
       playNumberEntrySound(settings.soundEnabled);
       triggerHaptic('number', settings.hapticsEnabled);
+
+      // Prepare initial collection counts (0/9 for all boxes, default color retained)
+      setParadeCollectionCounts({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 });
 
       // 1-second board freeze, then firecracker celebration & sequential 1-9 parade
       setTimeout(() => {
@@ -1004,6 +1028,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         customColors={settings.customColors}
         selectedNoteValue={selectedNoteValue}
         onSelectNoteValue={setSelectedNoteValue}
+        isParadeActive={isNumberParadeActive}
+        paradeCollectionCounts={paradeCollectionCounts}
+        arrivingBoxPulse={arrivingBoxPulse}
       />
 
       {/* Game Over Modal (Mistakes Limit Reached) */}
@@ -1169,6 +1196,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         board={game.board}
         isActive={isNumberParadeActive}
         onNumberStep={handleNumberStep}
+        onOccurrenceArrival={handleOccurrenceArrival}
         onComplete={handleNumberParadeComplete}
         soundEnabled={settings.soundEnabled}
         hapticsEnabled={settings.hapticsEnabled}

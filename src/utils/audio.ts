@@ -478,14 +478,51 @@ export function playParadeChime(num: number, enabled = true): void {
     osc.frequency.setValueAtTime(freq, now);
 
     gain.gain.setValueAtTime(0.001, now);
-    gain.gain.linearRampToValueAtTime(0.08, now + 0.004);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    gain.gain.linearRampToValueAtTime(0.08, now + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
 
     osc.connect(gain);
     gain.connect(ctx.destination);
 
     osc.start(now);
-    osc.stop(now + 0.25);
+    osc.stop(now + 0.38);
+  } catch {
+    // Ignore
+  }
+}
+
+// 7c. OCCURRENCE ARRIVAL CHIME (Ascending micro-tone for each of the 9 occurrences arriving at the box)
+export function playParadeOccurrenceArrival(num: number, occurrenceCount: number, enabled = true): void {
+  if (!enabled) return;
+  if (occurrenceCount >= 9) {
+    playParadeChime(num, enabled);
+    return;
+  }
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    const baseScale = [523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50, 1174.66];
+    const baseFreq = baseScale[Math.max(0, Math.min(8, num - 1))];
+    // Gentle ascending harmonic step per occurrence (1 to 8)
+    const freq = baseFreq * (1 + (occurrenceCount - 1) * 0.04);
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, now);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.045, now + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.20);
   } catch {
     // Ignore
   }

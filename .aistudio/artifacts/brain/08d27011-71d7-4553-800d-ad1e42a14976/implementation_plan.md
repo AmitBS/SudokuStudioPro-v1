@@ -63,4 +63,21 @@ Implemented a full-featured 'Saved Puzzles' management and bookmarking system al
 - **Continuous Empty Cell Tapping**: With a note value selected, tapping any empty cell on the 9x9 board enters that value as a note, or removes it if already present ("or vice-versa"), with undo tracking and audio/haptic responses.
 - **Tap-to-Deselect**: Tapping the same highlighted value box restores its background to normal and cancels the note-stamping state. Also resets on Pencil Mode toggle, pause, game over, or Escape key.
 
+## Game Completion Number Collection Animation & Relaxed Playback Tuning
+- **Sequential 1-by-1 Number Collection**: Sequentially collects numbers 1 through 9. Each number's 9 occurrences fly one by one from their board coordinates into their corresponding numpad box below.
+- **Dynamic Background Color Transition**:
+  - Initial State: Each number box retains its original default background color before collection begins.
+  - Progressive Blend: As occurrences arrive, the box smoothly transitions towards its configured palette color via `getProgressiveNumberBoxColor`.
+  - Final Completed State: 100% configured color with checkmark indicator once all 9 occurrences have landed.
+- **Live Collection Counter (`0/9` to `9/9`)**: Displays live collection count incremented strictly upon actual arrival events (`onOccurrenceArrival`).
+- **Relaxed, Smooth Playback Speed**:
+  - Flight duration expanded to `720ms` (from 350ms) with graceful Bézier lift and travel curves (`easeOutQuad` and `easeInOutCubic`).
+  - Stagger interval relaxed to `160ms` (from 75ms) for serene pacing.
+  - Motion trail history buffer increased to `36` points with refined ghost echo offsets `[5, 12, 19]` and numbers-only stream offsets `[5, 11, 17, 23]`.
+  - Floaty stardust particles with gentle deceleration (`0.975`) and softer decay.
+  - Slower arrival shockwave ring expansion (`+1.4` radius/frame) and smoother CSS color transitions (`420ms`).
+  - Box arrival pulse extended to `380ms` and settling pause between numbers set to `320ms` (500ms before victory modal).
+  - Web Audio harmonic chimes and arrival notes lengthened with warm acoustic exponential decay.
+- **Full Display Mode Support**: Seamless across all 4 modes (Number, Symbol, Color, and Fruit).
+
 

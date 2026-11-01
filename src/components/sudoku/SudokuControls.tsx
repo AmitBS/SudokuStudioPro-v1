@@ -1,7 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../../theme/themeContext';
 import { SudokuInputMode } from '../../types/sudoku';
-import { SudokuValueDisplay, getSymbolAriaLabel } from '../../utils/sudokuSymbols';
+import {
+  SudokuValueDisplay,
+  getSymbolAriaLabel,
+  getConfiguredNumberColor,
+  getProgressiveNumberBoxColor,
+  isColorLight,
+  interpolateColors,
+} from '../../utils/sudokuSymbols';
 import { Undo2, Eraser, Pencil, Pen, Lightbulb, Compass } from 'lucide-react';
 import { playClickSound, playSuccessSound, triggerHaptic } from '../../utils/audio';
 
@@ -22,6 +29,9 @@ interface SudokuControlsProps {
   customColors?: Record<number, string>;
   selectedNoteValue?: number | null;
   onSelectNoteValue?: (num: number | null) => void;
+  isParadeActive?: boolean;
+  paradeCollectionCounts?: Record<number, number>;
+  arrivingBoxPulse?: { num: number; count: number } | null;
 }
 
 export const SudokuControls: React.FC<SudokuControlsProps> = ({
@@ -41,6 +51,9 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
   customColors,
   selectedNoteValue = null,
   onSelectNoteValue,
+  isParadeActive = false,
+  paradeCollectionCounts,
+  arrivingBoxPulse = null,
 }) => {
   const { isDark, activePrimary } = useTheme();
 
@@ -340,16 +353,93 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
       <div className="grid grid-cols-9 gap-1 sm:gap-2">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => {
           const placedCount = digitCounts[num] || 0;
-          const isCompleted = placedCount >= 9;
-          const isCelebrating = celebratingNumber === num;
-          const isParadeCompleted = completedParadeNumbers.includes(num);
+          const isNormalCompleted = placedCount >= 9;
           const isSelected = isNotesMode && selectedNoteValue === num;
           const isPressing = isNotesMode && pressingNum === num && !isSelected;
 
-          // In Pencil mode, allow tapping any number to draft candidate notes even if 9 are completed
-          const isDisabled = !isNotesMode && isCompleted && !isCelebrating && !isParadeCompleted;
+          // Celebration parade collection state
+          const isInParade = isParadeActive || paradeCollectionCounts !== undefined || completedParadeNumbers.length > 0;
+          const collectionCount = paradeCollectionCounts ? (paradeCollectionCounts[num] ?? 0) : (completedParadeNumbers.includes(num) ? 9 : 0);
+          const isParadeCompleted = completedParadeNumbers.includes(num) || collectionCount >= 9;
+          const isCurrentlyGathering = celebratingNumber === num;
+          const isArrivingPulse = arrivingBoxPulse?.num === num;
 
-          const buttonTitle = isNotesMode
+          const targetColor = getConfiguredNumberColor(num, inputMode, customColors);
+          const baseSurfaceBg = isDark ? '#1a1f2c' : '#ffffff';
+          const baseOutline = isDark ? '#334155' : 'var(--md-sys-color-outline-variant)';
+
+          // Dynamic background color during parade collection:
+          // - Initial state (count = 0): retain original default background color
+          // - During collection (1 <= count < 9): smoothly transition from original to configured color
+          // - Completed (count >= 9): 100% configured color
+          let buttonBgColor: string;
+          let buttonBorderColor: string;
+          let textColor: string;
+          let counterColor: string;
+
+          if (isInParade) {
+            if (collectionCount <= 0) {
+              // Initial State: pristine default background color, not prematurely colored
+              buttonBgColor = 'var(--md-sys-color-surface)';
+              buttonBorderColor = 'var(--md-sys-color-outline-variant)';
+              textColor = 'var(--md-sys-color-on-surface)';
+              counterColor = 'var(--md-sys-color-on-surface-variant)';
+            } else if (collectionCount >= 9) {
+              // Final Completed State: 100% configured color
+              buttonBgColor = targetColor;
+              buttonBorderColor = targetColor;
+              const light = isColorLight(targetColor);
+              textColor = light ? '#0f172a' : '#ffffff';
+              counterColor = light ? '#1e293b' : 'rgba(255, 255, 255, 0.95)';
+            } else {
+              // Progressive color transition as occurrences arrive
+              buttonBgColor = getProgressiveNumberBoxColor(baseSurfaceBg, targetColor, collectionCount);
+              buttonBorderColor = interpolateColors(
+                typeof baseOutline === 'string' && baseOutline.startsWith('#') ? baseOutline : '#94a3b8',
+                targetColor,
+                Math.min(1, (collectionCount + 2) / 11)
+              );
+              const light = isColorLight(buttonBgColor);
+              textColor = collectionCount >= 5 ? (light ? '#0f172a' : '#ffffff') : 'var(--md-sys-color-on-surface)';
+              counterColor = collectionCount >= 5 ? (light ? '#1e293b' : 'rgba(255, 255, 255, 0.95)') : 'var(--md-sys-color-on-surface)';
+            }
+          } else {
+            // Normal Gameplay State
+            buttonBgColor = isSelected
+              ? '#F59E0B'
+              : isNotesMode
+              ? isDark ? 'rgba(245, 158, 11, 0.12)' : 'rgba(254, 243, 199, 0.5)'
+              : isNormalCompleted
+              ? 'var(--md-sys-color-surface-container-high)'
+              : 'var(--md-sys-color-surface)';
+
+            buttonBorderColor = isSelected
+              ? '#B45309'
+              : isNotesMode
+              ? '#F59E0B'
+              : 'var(--md-sys-color-outline-variant)';
+
+            textColor = isSelected
+              ? '#FFFFFF'
+              : isNotesMode
+              ? isDark ? '#FCD34D' : '#B45309'
+              : isNormalCompleted
+              ? 'var(--md-sys-color-on-surface-variant)'
+              : 'var(--md-sys-color-on-surface)';
+
+            counterColor = isSelected
+              ? '#FFFFFF'
+              : isNotesMode
+              ? '#D97706'
+              : 'var(--md-sys-color-on-surface-variant)';
+          }
+
+          // In Pencil mode, allow tapping any number to draft candidate notes even if 9 are completed
+          const isDisabled = isInParade || (!isNotesMode && isNormalCompleted);
+
+          const buttonTitle = isInParade
+            ? `${getSymbolAriaLabel(num, inputMode, customColors)}: collected ${collectionCount}/9`
+            : isNotesMode
             ? isSelected
               ? `Note ${num} selected. Tap empty cells to add or remove note. Tap to deselect.`
               : `Long-press ${num} to select note for quick cell placement.`
@@ -360,7 +450,13 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
               key={num}
               id={`numpad-btn-${num}`}
               type="button"
-              aria-label={`${getSymbolAriaLabel(num, inputMode, customColors)}${isNotesMode ? ' candidate note' : ''}${isSelected ? ' (selected note)' : ''}`}
+              aria-label={`${getSymbolAriaLabel(num, inputMode, customColors)}${
+                isInParade
+                  ? ` collection count ${collectionCount} of 9`
+                  : isNotesMode
+                  ? ' candidate note'
+                  : ''
+              }${isSelected ? ' (selected note)' : ''}`}
               aria-pressed={isSelected}
               disabled={isDisabled || disabled}
               title={buttonTitle}
@@ -373,39 +469,28 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
               }}
               onClick={() => handleClick(num)}
               style={{
-                backgroundColor: isSelected
-                  ? '#F59E0B'
-                  : isCelebrating || isParadeCompleted
-                  ? 'var(--md-sys-color-primary)'
-                  : isNotesMode
-                  ? isDark ? 'rgba(245, 158, 11, 0.12)' : 'rgba(254, 243, 199, 0.5)'
-                  : isCompleted
-                  ? 'var(--md-sys-color-surface-container-high)'
-                  : 'var(--md-sys-color-surface)',
-                borderColor: isSelected
-                  ? '#B45309'
-                  : isCelebrating || isParadeCompleted
-                  ? 'var(--md-sys-color-primary)'
-                  : isNotesMode
-                  ? '#F59E0B'
-                  : 'var(--md-sys-color-outline-variant)',
-                borderWidth: isSelected ? '2px' : '1px',
+                backgroundColor: buttonBgColor,
+                borderColor: buttonBorderColor,
+                borderWidth: isSelected || isArrivingPulse || (isInParade && collectionCount >= 9) ? '2px' : '1px',
+                transition: 'background-color 420ms cubic-bezier(0.4, 0, 0.2, 1), border-color 420ms cubic-bezier(0.4, 0, 0.2, 1), transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 360ms ease',
               }}
-              className={`relative flex flex-col items-center justify-center py-1.5 sm:py-2 h-[48px] sm:h-[56px] rounded-xl border transition-all active:scale-95 select-none touch-manipulation ${
+              className={`relative flex flex-col items-center justify-center py-1.5 sm:py-2 h-[48px] sm:h-[56px] rounded-xl border select-none touch-manipulation ${
                 isSelected
                   ? 'ring-4 ring-amber-500/60 shadow-lg shadow-amber-500/35 scale-105 z-10 font-extrabold'
-                  : isCelebrating
-                  ? 'scale-115 ring-4 ring-primary/50 shadow-lg shadow-primary/40 z-20 animate-pulse'
-                  : isParadeCompleted
-                  ? 'ring-2 ring-primary/40 shadow-sm'
-                  : isDisabled
+                  : isArrivingPulse
+                  ? 'scale-115 ring-4 shadow-xl z-30 font-black'
+                  : isInParade && isParadeCompleted
+                  ? 'ring-2 ring-white/50 shadow-md font-bold'
+                  : isInParade && isCurrentlyGathering
+                  ? 'ring-2 ring-primary/40 shadow-xs'
+                  : isDisabled && !isInParade
                   ? 'opacity-35 cursor-not-allowed'
                   : isNotesMode
-                  ? 'hover:ring-1 hover:ring-amber-500 shadow-xs'
-                  : 'hover:opacity-90 shadow-xs'
+                  ? 'hover:ring-1 hover:ring-amber-500 shadow-xs active:scale-95'
+                  : 'hover:opacity-90 shadow-xs active:scale-95'
               } ${isPressing ? 'scale-95 ring-2 ring-amber-500/50' : ''}`}
             >
-              {/* Corner badge indicating selected note stamping or standard pencil mode */}
+              {/* Corner badge indicating selected note stamping or standard pencil mode or 9/9 completed */}
               {isSelected ? (
                 <span
                   className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-white text-amber-600 flex items-center justify-center text-[9px] font-black shadow-md ring-1 ring-amber-500 animate-in zoom-in-75 duration-150 select-none pointer-events-none"
@@ -413,44 +498,48 @@ export const SudokuControls: React.FC<SudokuControlsProps> = ({
                 >
                   ✎
                 </span>
-              ) : isNotesMode ? (
+              ) : isNotesMode && !isInParade ? (
                 <span
                   className="absolute top-0.5 right-1 text-[8px] font-bold text-amber-500 select-none pointer-events-none"
                   aria-hidden="true"
                 >
                   ✎
                 </span>
+              ) : isInParade && collectionCount >= 9 ? (
+                <span
+                  className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-white text-emerald-600 flex items-center justify-center text-[8px] font-black shadow-sm ring-1 ring-black/10 select-none pointer-events-none animate-in zoom-in-50 duration-200"
+                  aria-hidden="true"
+                >
+                  ✓
+                </span>
               ) : null}
 
+              {/* Symbol / Number / Fruit / Color Display */}
               <span
                 style={{
-                  color: isSelected
-                    ? '#FFFFFF'
-                    : isCelebrating || isParadeCompleted
-                    ? 'var(--md-sys-color-on-primary)'
-                    : isNotesMode
-                    ? isDark ? '#FCD34D' : '#B45309'
-                    : isCompleted
-                    ? 'var(--md-sys-color-on-surface-variant)'
-                    : 'var(--md-sys-color-on-surface)',
+                  color: textColor,
                 }}
-                className={`text-base sm:text-xl font-bold font-mono flex items-center justify-center h-5 sm:h-7 ${
-                  isSelected ? 'drop-shadow-sm font-extrabold' : ''
-                }`}
+                className={`text-base sm:text-xl font-bold font-mono flex items-center justify-center h-5 sm:h-7 transition-all duration-150 ${
+                  isSelected || (isInParade && collectionCount >= 9) ? 'drop-shadow-sm font-extrabold' : ''
+                } ${isArrivingPulse ? 'scale-115' : ''}`}
               >
                 <SudokuValueDisplay value={num} inputMode={inputMode} customColors={customColors} size="md" />
               </span>
+
+              {/* Counter: live 0/9 to 9/9 during parade collection, or placedCount during normal gameplay */}
               <span
                 style={{
-                  color: isSelected
-                    ? '#FFFFFF'
-                    : isNotesMode
-                    ? '#D97706'
-                    : 'var(--md-sys-color-on-surface-variant)',
+                  color: counterColor,
                 }}
-                className={`text-[9px] sm:text-[10px] font-mono leading-none mt-0.5 ${isSelected ? 'font-bold' : 'font-medium'}`}
+                className={`font-mono leading-none mt-0.5 transition-all duration-150 ${
+                  isInParade
+                    ? 'text-[9.5px] sm:text-[10px] font-bold tracking-tight'
+                    : isSelected
+                    ? 'text-[9px] sm:text-[10px] font-bold'
+                    : 'text-[9px] sm:text-[10px] font-medium'
+                } ${isArrivingPulse ? 'scale-120 font-black' : ''}`}
               >
-                {9 - placedCount}
+                {isInParade ? `${Math.min(9, collectionCount)}/9` : 9 - placedCount}
               </span>
             </button>
           );

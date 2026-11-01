@@ -65,6 +65,98 @@ export function getSudokuColorName(num: number): string {
 }
 
 /**
+ * Standard vibrant palette for Numbers and Symbols
+ */
+export const DIGIT_COLORS: Record<number, string> = {
+  1: '#f59e0b', // Amber Gold
+  2: '#0284c7', // Sky Azure
+  3: '#10b981', // Emerald Jade
+  4: '#f43f5e', // Rose Coral
+  5: '#8b5cf6', // Royal Violet
+  6: '#06b6d4', // Cyan Electric
+  7: '#d946ef', // Fuchsia Neon
+  8: '#14b8a6', // Teal Mint
+  9: '#eab308', // Brilliant Sunlight Gold
+};
+
+/**
+ * Returns the configured color for a given number across all 4 display modes:
+ * - numbers: DIGIT_COLORS
+ * - symbols: DIGIT_COLORS
+ * - colors: getSudokuColor(num, customColors)
+ * - fruits: SUDOKU_FRUITS[num].primaryColor
+ */
+export function getConfiguredNumberColor(
+  num: number,
+  inputMode: SudokuInputMode = 'numbers',
+  customColors?: Record<number, string>
+): string {
+  if (inputMode === 'colors') {
+    return getSudokuColor(num, customColors);
+  }
+  if (inputMode === 'fruits') {
+    return SUDOKU_FRUITS[num]?.primaryColor || DIGIT_COLORS[num] || '#3b82f6';
+  }
+  return DIGIT_COLORS[num] || '#3b82f6';
+}
+
+export function parseColorToRgb(color: string): { r: number; g: number; b: number } {
+  if (!color) return { r: 255, g: 255, b: 255 };
+  if (color.startsWith('#')) {
+    let hex = color.slice(1);
+    if (hex.length === 3) {
+      hex = hex.split('').map(c => c + c).join('');
+    }
+    const val = parseInt(hex, 16);
+    if (isNaN(val)) return { r: 255, g: 255, b: 255 };
+    return {
+      r: (val >> 16) & 255,
+      g: (val >> 8) & 255,
+      b: val & 255,
+    };
+  }
+  const match = color.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+  if (match) {
+    return {
+      r: parseInt(match[1], 10),
+      g: parseInt(match[2], 10),
+      b: parseInt(match[3], 10),
+    };
+  }
+  return { r: 255, g: 255, b: 255 };
+}
+
+export function isColorLight(color: string): boolean {
+  const rgb = parseColorToRgb(color);
+  const lum = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+  return lum > 0.62;
+}
+
+export function interpolateColors(fromColor: string, toColor: string, factor: number): string {
+  const f = Math.max(0, Math.min(1, factor));
+  const c1 = parseColorToRgb(fromColor);
+  const c2 = parseColorToRgb(toColor);
+  const r = Math.round(c1.r + f * (c2.r - c1.r));
+  const g = Math.round(c1.g + f * (c2.g - c1.g));
+  const b = Math.round(c1.b + f * (c2.b - c1.b));
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+/**
+ * Computes progressive background color for number box from default state (count = 0)
+ * to configured final color (count = 9).
+ */
+export function getProgressiveNumberBoxColor(
+  baseColor: string,
+  targetColor: string,
+  count: number
+): string {
+  if (count <= 0) return baseColor;
+  if (count >= 9) return targetColor;
+  return interpolateColors(baseColor, targetColor, count / 9);
+}
+
+/**
  * Fixed Sudoku Symbol Mapping:
  * 1 -> Filled Square
  * 2 -> Filled Circle
